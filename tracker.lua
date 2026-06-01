@@ -1,10 +1,25 @@
--- PSIV Tracker: Full Flag Sync (v11.3)
+
 memory.usememorydomain("M68K BUS")
 
 local event_flags_start = 0xFFF100 
 local chest_flags_start = 0xFFF120 
 local world_index_addr   = 0xFFF400 
 local inventory_start    = 0xFFF410 
+
+
+local character_equip_slots = {
+    0xFFF54C, 0xFFF54D, 0xFFF54E, 0xFFF54F,  -- Chaz
+    0xFFF5CC, 0xFFF5CD, 0xFFF5CE, 0xFFF5CF,  -- Alys
+    0xFFF64C, 0xFFF64D, 0xFFF64E, 0xFFF64F,  -- Hahn
+    0xFFF6CC, 0xFFF6CD, 0xFFF6CE, 0xFFF6CF,  -- Rune 
+    0xFFF74C, 0xFFF74D, 0xFFF74E, 0xFFF74F,  -- Gryz
+    0xFFF7CC, 0xFFF7CD, 0xFFF7CE, 0xFFF7CF,  -- Rika
+    0xFFF84C, 0xFFF84D, 0xFFF84E, 0xFFF84F,  -- Demi
+    0xFFF8CC, 0xFFF8CD, 0xFFF8CE, 0xFFF8CF,  -- Wren
+    0xFFF94C, 0xFFF94D, 0xFFF94E, 0xFFF94F,  -- Raja
+    0xFFF9CC, 0xFFF9CD, 0xFFF9CE, 0xFFF9CF,  -- Kyra
+    0xFFFA4C, 0xFFFA4D, 0xFFFA4E, 0xFFFA4F   -- Seth
+}
 
 local data_filename = "data.txt"
 
@@ -20,11 +35,22 @@ while true do
                   sapphire=0, plate=0, vahal=0, machine=0, mantle=0, p_ring=0, m_ring=0, 
                   d_ring=0, r_ring=0, a_ring=0, mahlay=0 }
     
+    -- 1. Check Standard Shared Inventory
     for i = inventory_start, inventory_start + 39 do
         local val = memory.read_u8(i)
         for name, id in pairs(IDs) do
             if val == id then
                 if name == "amber" then res.amber = res.amber + 1 else res[name] = 1 end
+            end
+        end
+    end
+
+    -- 2. Scan Character Equipment Slots 
+    for _, addr in ipairs(character_equip_slots) do
+        local val = memory.read_u8(addr)
+        for name, id in pairs(IDs) do
+            if name ~= "amber" and val == id then
+                res[name] = 1
             end
         end
     end
