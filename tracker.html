@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PS4 Profound Distortion Tracker</title>
+    <style>
+
+        /* Scrollbar Track */
+::-webkit-scrollbar {
+    width: 3px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+/* Scrollbar Thumb */
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 229, 255, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 229, 255, 0.6);
+}
+
+        /* Specific Style for the RESET Button */
+.reset-btn {
+    border-color: rgba(255, 0, 0, 0.5) !important;
+    color: rgba(255, 100, 100, 0.9) !important;
+}
+
+.reset-btn:hover {
+    background: rgba(255, 0, 0, 0.15) !important;
+    border-color: #ff0000 !important;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+}
+
+#objectives-container.ring-hunt-layout .obj-container:nth-child(n+6) {
+    display: none !important;
+}
+.obj-container:not(.done):hover {
+    background: rgba(0, 229, 255, 0.08) !important;
+    border-color: rgba(0, 229, 255, 0.5) !important;
+    border-left-color: var(--accent) !important;
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.1);
+    transform: translateX(3px);
+}
+
+        /* Container to pin both to the bottom-left of the glass panel */
+#status-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.05); /* Match button look */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Match button border */
+    border-radius: 8px;
+    pointer-events: none; /* Non-clickable */
+    flex-shrink: 0;
+}
+
+#status-led {
+    width: 8px; 
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ff0000;
+    box-shadow: 0 0 5px #ff0000;
+    animation: led-static-red 2s infinite ease-in-out;
+}
+
+#status-led.connected {
+    background-color: #00ff00;
+    box-shadow: 0 0 10px #00ff00;
+    animation: led-pulse-green 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+
+#status-text {
+    font-size: 9px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Segoe UI', sans-serif;
+    white-space: nowrap;
+}
+
+/* Make text glow Cyan when the LED is green */
+#status-led.connected + #status-text {
+    color: var(--accent);
+    text-shadow: 0 0 5px rgba(0, 229, 255, 0.5);
+}
+
+:root {
+    --bg: #000;
+    --panel-bg: #1a1a1a;
+    --border: #444;
+    --text: #fff;
+    --accent: #00e5ff;
+    --locked: #711D0C;
+    --pin-ready: #00ff00;
+    --obj-active: #ff0000;
+    --bg-url: url('images/PDgalaxy.png');
+        }
+
+        
+.loc-motavia { 
+    border: 1px solid rgba(255, 136, 0, 0.4) !important; 
+    border-left: 4px solid #ff8800 !important; 
+}
+
+.loc-dezolis { 
+    border: 1px solid rgba(0, 170, 255, 0.4) !important; 
+    border-left: 4px solid #00aaff !important; 
+}
+
+.loc-rykros { 
+    border: 1px solid rgba(255, 0, 255, 0.4) !important; 
+    border-left: 4px solid #ff00ff !important; 
+}
+
+.loc-space { 
+    border: 1px solid rgba(255, 255, 255, 0.4) !important; 
+    border-left: 4px solid #ffffff !important; 
+}
+
+h3 { 
+    margin-top: 0; 
+    border-bottom: 1px solid rgba(0, 229, 255, 0.2); 
+    padding-bottom: 8px; 
+    font-size: 0.85em; 
+    color: var(--accent); 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+}
+
+@keyframes finalGlow {
+    0% { box-shadow: 0 0 5px var(--pin-ready); transform: translate(-50%, -50%) scale(1); }
+    50% { box-shadow: 0 0 20px var(--pin-ready); transform: translate(-50%, -50%) scale(1.3); }
+    100% { box-shadow: 0 0 5px var(--pin-ready); transform: translate(-50%, -50%) scale(1); }
+}
+
+       /* --- High-Visibility Pulse Animations --- */
+
+/* High-Energy Green Pulse */
+@keyframes led-pulse-green {
+    0% { 
+        box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.7); 
+        transform: scale(0.95);
+    }
+    70% { 
+        box-shadow: 0 0 0 12px rgba(0, 255, 0, 0); 
+        transform: scale(1);
+    }
+    100% { 
+        box-shadow: 0 0 0 0 rgba(0, 255, 0, 0); 
+        transform: scale(0.95);
+    }
+}
+
+/* Static Red with a "Low Power" Glow */
+@keyframes led-static-red {
+    0%, 100% { box-shadow: 0 0 5px #ff0000; opacity: 1; }
+    50% { box-shadow: 0 0 2px #ff0000; opacity: 0.8; }
+}
+
+/* --- Applied Styles --- */
+
+#status-led {
+    width: 10px; 
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+    background-color: #ff0000;
+    /* Red doesn't move, just glows slightly */
+    animation: led-static-red 2s infinite ease-in-out;
+}
+
+#status-led.connected {
+    background-color: #00ff00;
+    /* Green pulses physically and visually */
+    animation: led-pulse-green 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+
+body {
+    /* Critical: This must use var(--bg-url) to receive the JS update */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6)), 
+                      var(--bg-url); 
+    
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-color: #000;
+    
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    margin: 0; padding: 10px;
+    display: flex; flex-direction: column; height: 100vh;
+    box-sizing: border-box; 
+    overflow: hidden;
+}
+
+        /* Glass Navigation Bar */
+/* Glass Navigation Bar */
+.tab-bar { 
+    display: flex; 
+    justify-content: center; 
+    gap: 10px; 
+    margin-bottom: 15px; 
+    flex-wrap: wrap; 
+    align-items: center; 
+    background: rgba(0, 0, 0, 0.7) !important; 
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 229, 255, 0.6);
+    border-radius: 12px;
+    padding: 10px 20px;
+    position: relative;
+    padding-left: 50px;
+}
+
+/* Base Glass Button Style */
+.tab-btn {
+    background: rgba(255, 255, 255, 0.05); 
+    color: white; 
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 6px 16px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-size: 11px;
+    transition: all 0.2s ease;
+}
+
+/* FORCE BLUE TEXT for Mode Buttons */
+.mode-btn, button[onclick*="toggleRetraceMode"] {
+    color: var(--accent) !important;
+    border-color: rgba(0, 229, 255, 0.3) !important;
+}
+
+/* Active State for Special Modes */
+.active-mode { 
+    background-color: var(--obj-active) !important; /* Becomes Red */
+    color: white !important; 
+}
+
+.retrace-active { 
+    background: rgba(46, 41, 146, 0.6) !important; /* Deep Blue Glass */
+    border-color: var(--accent) !important;
+}
+
+.tab-btn:hover {
+    background: rgba(0, 229, 255, 0.15);
+    border-color: var(--accent);
+}
+
+/* Glass Timer Container */
+.timer-container { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    background: rgba(0, 0, 0, 0.3); 
+    padding: 6px 15px; 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    border-radius: 8px; 
+}
+
+/* Ring Hunt Mode: Turns RED when active */
+.active-mode { 
+    background-color: var(--obj-active) !important; 
+    color: white !important; 
+    text-shadow: none !important;
+}
+
+/* Retrance Mode: Stays BLUE text but adds a background/glow when active */
+.retrace-active { 
+    background: #2e2992 !important; 
+    color: var(--accent) !important; 
+    text-shadow: 0 0 8px var(--accent);
+    border-color: var(--accent) !important;
+}
+
+/* Tab Active State */
+.tab-btn.active { background: #444; border-color: var(--accent); color: white; }
+
+#map-resizer-wrap {
+    display: block; 
+    width: 100%; 
+    /* Fixed height to fit two rows of 250px maps + gaps + padding */
+    height: 560px; 
+    margin-bottom: 15px; 
+    box-sizing: border-box;
+
+    /* Tactical Glass Effect */
+    background: rgba(0, 0, 0, 0.8) !important; 
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    padding: 15px;
+    
+    /* Disable scrolling and resizing to keep the UI static */
+    overflow: hidden; 
+    resize: none; 
+}
+
+#maps-container {
+    display: grid; 
+    /* Strictly force two columns of 400px */
+    grid-template-columns: repeat(2, 400px); 
+    justify-content: center; 
+    gap: 15px;
+    align-content: start; 
+    height: 100%; 
+    width: 100%; 
+    /* Remove internal scrollbars */
+    overflow: hidden; 
+    background: transparent !important;
+}
+
+.map-box {
+    position: relative; 
+    height: 250px !important; 
+    width: 400px !important; 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    background-color: #111; 
+    background-size: 100% 100%; 
+    background-repeat: no-repeat; 
+    flex: none !important; 
+    border-radius: 4px;
+}
+
+/* --- Retrance Pin Style --- */
+.retrace-only { display: none !important; }
+body.show-retrace .retrace-only { display: block !important; }
+body.show-retrace div.retrace-only.loc-container { display: flex !important; }
+.retrace-active { background: #7b1fa2 !important; border-color: #e040fb !important; box-shadow: 0 0 10px #7b1fa2; }
+
+.map-pin {
+    position: absolute;
+    border: 2px solid #000000; 
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer; 
+    z-index: 10;
+    box-shadow: 0 0 5px #000;
+    /* Number Styling */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-family: Arial, sans-serif; /* Clean font for small numbers */
+    font-weight: bold;
+    color: #000; /* Black type */
+}
+
+.map-pin.pin-sm { width: 16px; height: 16px; font-size: 11px; }
+.map-pin.pin-lg { width: 25px; height: 25px; font-size: 13px; }
+
+
+
+.map-pin.orange {
+    background-color: #ff7b00 !important; 
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    color: #000000 !important;
+}
+    
+.map-pin.locked { 
+    background: var(--locked); 
+    box-shadow: 0 0 8px var(--locked);
+    border: 1px solid #ffffff; 
+    color: #fff; 
+}
+
+.map-pin.accessible { 
+    background: var(--pin-ready); 
+    box-shadow: 0 0 8px var(--pin-ready); 
+}
+
+.map-pin.cleared { 
+    background: gray; 
+    opacity: 0.7; 
+}
+
+.map-pin.accessible[title*="The Edge"] { 
+    animation: finalGlow 1.5s infinite ease-in-out; 
+}
+
+.bottom-panels { 
+    flex: 1; 
+    display: flex; 
+    gap: 10px; 
+    overflow: hidden;
+}
+
+/* Glass Panel Foundation */
+.panel { 
+    background: rgba(10, 10, 10, 0.6) !important; /* Translucent dark base */
+    backdrop-filter: blur(15px); /* Frost effect */
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 229, 255, 0.377); /* Dim cyan frame */
+    border-radius: 8px;
+    padding: 12px; 
+    overflow-x: hidden !important;
+    overflow-y: auto !important; 
+    position: relative; 
+    flex: 0 0 auto; 
+    width: 280px; 
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6); /* Depth shadow */
+}
+
+.resize-handle {
+    position: absolute;
+    top: 0;
+    right: -4px;
+    width: 8px;
+    height: 100%;
+    cursor: ew-resize;
+    z-index: 100;
+    border-radius: 4px;
+    background: rgba(0, 229, 255, 0.08);
+    transition: background 0.2s;
+}
+
+.resize-handle:hover {
+    background: rgba(0, 229, 255, 0.3);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
+.locations-panel { flex: 1 1 auto !important; width: auto; resize: none; }
+h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 5px; font-size: 0.9em; color: #aaa; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 4px; }
+
+.item { 
+    width: 68px; 
+    height: 68px; 
+    cursor: pointer; 
+    filter: grayscale(1) brightness(0.4); 
+    transition: all 0.2s ease; /* Smoother transition for the border color */
+    image-rendering: pixelated; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+    
+/* Permanent Border */
+    border: 1px solid #333; /* Dark grey when untoggled */
+    border-radius: 4px;
+    box-sizing: border-box; /* Ensures border doesn't grow the box size */
+}
+
+/* Active state - Dimmer and cleaner */
+.item.active { 
+    filter: grayscale(0) brightness(1) drop-shadow(0 0 5px rgba(0, 229, 255, 0.3)); 
+    border: 1px solid rgba(0, 229, 255, 0.4); /* Dimmed border */
+    background: rgba(0, 229, 255, 0.05); /* Extremely dim inner tint (5%) */
+}
+
+.item img { width: 60px; height: 60px; object-fit: contain; }
+
+.counter { position: absolute; bottom: 8px; right: 4px; font-size: 14px; color: var(--accent); font-weight: bold; background: rgba(0,0,0,0.6); padding: 0 2px; }
+
+.objectives-grid { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    align-items: flex-start; 
+}
+
+.obj-container { 
+    display: flex; 
+    align-items: center; 
+    background: rgba(20, 20, 20, 0.6); 
+    /* Tactical sidebar effect */
+    border: 1px solid #333;
+    border-left: 4px solid var(--accent); 
+    border-radius: 4px; 
+    margin-bottom: 4px; 
+    width: 250px !important; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(5px);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Pending State: Subtle outer glow so you can see what's left */
+.obj-container:not(.done) {
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.05);
+}
+
+/* Completed State: Shuts down the "electronics" */
+.obj-container.done { 
+    border-color: #222 !important;
+    border-left-color: #400 !important; /* Dimmed red sidebar */
+    background: rgba(10, 0, 0, 0.6) !important;
+    opacity: 0.5;
+    transform: translateX(5px); /* Slight shift to show it's "pushed aside" */
+}
+
+.obj-input { 
+    background: transparent; 
+    border: none; 
+    color: #fff; 
+    /* Increased font for better visibility */
+    font-size: 20px; 
+    /* Tightened vertical padding to keep box height the same */
+    padding: 6px 12px; 
+    font-family: inherit; 
+    outline: none; 
+    width: 100%; 
+    transition: all 0.3s;
+    /* Forces the text to stay on one line so it doesn't push the box down */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.obj-container.done .obj-input {
+    color: #555 !important;
+    text-decoration: line-through;
+    filter: blur(0.3px); /* Makes it look physically receding */
+}
+
+/* Ring Hunt Layout helper */
+#objectives-container.ring-hunt-layout .obj-container:nth-child(n+6) {
+    display: none !important;
+}
+
+        #grid-locations { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+/* Glass Locations Box Refinement */
+
+.loc-container {
+    background: rgba(255, 255, 255, 0.03) !important;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex; 
+    flex-direction: column; 
+    gap: 2px; 
+    padding: 6px; 
+    border-radius: 4px; 
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+}
+
+.loc-container:hover {
+    background: rgba(0, 229, 255, 0.05) !important;
+    border-color: rgba(0, 229, 255, 0.3) !important;
+    transform: translateX(1px);
+}
+
+.loc-title { 
+    font-size: 14px; 
+    color: #acabab; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+}
+
+        .loc-input {
+    background: #000;
+    border: 1px solid #444;
+    /* Use your cyan accent variable for the text */
+    color: var(--accent); 
+    padding: 2px 4px;
+    font-size: 14px;
+    outline: none;
+    height: 24px;
+    /* Optional: make the text "glow" slightly to match the active mode look */
+    text-shadow: 0 0 5px rgba(0, 229, 255, 0.3);
+}
+
+/* Make sure the placeholder text remains dim so it doesn't look like a real note */
+.loc-input::placeholder {
+    color: #555;
+    text-shadow: none;
+}
+
+        
+.timer-container { display: flex; align-items: center; gap: 10px; background: #111; padding: 4px 12px; border: 1px solid #333; border-radius: 10px; }
+#timer-display { font-size: 18px; color: var(--accent); font-weight: bold; min-width: 90px; text-align: center; }
+.timer-btn { background: #333; color: #fff; border: 1px solid #555; cursor: pointer; font-size: 10px; padding: 2px 8px; border-radius: 4px; }
+
+#maps-container.single-view { grid-template-columns: 1fr; align-content: center; }
+#maps-container.single-view .map-box { width: 800px !important; height: 500px !important; max-width: 95%; margin: 0 auto; }
+    
+    </style>
+</head>
+
+<body onkeydown="handleGlobalKeys(event)">
+    <div class="tab-bar">
+    <div id="status-group">
+        <span id="status-led"></span>
+        <span id="status-text">Disconnected</span>
+    </div>
+
+    <button class="tab-btn active" id="btn-all" onclick="switchMap('all', this)">All Planets</button>
+    <button class="tab-btn" onclick="switchMap('motavia', this)">Motavia</button>
+    <button class="tab-btn" onclick="switchMap('dezolis', this)">Dezolis</button>
+    <button class="tab-btn" onclick="switchMap('rykros', this)">Rykros</button>
+    <button class="tab-btn" onclick="switchMap('space', this)">Outer Space</button>
+    
+    <button class="tab-btn mode-btn" onclick="setRingHuntMode()">Ring Hunt Mode</button>
+    <button class="tab-btn" onclick="toggleRetraceMode(this)">Retrance Mode</button>
+    
+    <input type="file" id="bg-upload" accept="image/*" style="display:none" onchange="applyCustomBg(this)">
+    <button class="tab-btn mode-btn" onclick="document.getElementById('bg-upload').click()">BG SELECT</button>
+    <button class="tab-btn reset-btn" onclick="resetTracker()">RESET</button>
+    
+        <div class="timer-container">
+    <div id="timer-display">00:00:00</div>
+    <button class="timer-btn" id="timer-toggle" onclick="toggleTimer()">START</button>
+    <button class="timer-btn" onclick="resetTimer()">RESET</button>
+</div>
+    </div>
+
+        <div id="map-resizer-wrap">
+        <div id="maps-container"></div>
+    </div>
+
+        <div class="bottom-panels">
+        <div class="panel">
+            <h3>Items</h3>
+        <div id="grid-items" class="grid"></div>
+    </div>
+        <div class="panel">
+            <h3>Objectives</h3>
+        <div id="objectives-container" class="objectives-grid"></div>
+    </div>
+        <div class="panel locations-panel">
+            <h3>Locations</h3>
+        <div id="grid-locations" class="grid" style="grid-template-columns: 1fr;"></div>
+    </div>
+</div>
+
+    <script>
+
+    function initResizeHandles() {
+        document.querySelectorAll('.panel').forEach(panel => {
+        const handle = document.createElement('div');
+        handle.className = 'resize-handle';
+        panel.appendChild(handle);
+
+        handle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const startX = e.clientX;
+            const startWidth = panel.offsetWidth;
+
+            const onMove = (e) => {
+                const newWidth = startWidth + (e.clientX - startX);
+                panel.style.width = `${Math.max(150, newWidth)}px`;
+            };
+
+            const onUp = () => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+    });
+}
+
+    function applyCustomBg(input) {
+        if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const dataUrl = e.target.result;
+            
+            // Apply directly to body as well as the CSS variable
+            document.documentElement.style.setProperty('--bg-url', `url('${dataUrl}')`);
+            document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.6)), url('${dataUrl}')`;
+            
+            try {
+                localStorage.setItem('ps4_custom_bg', dataUrl);
+            } catch (err) {
+                console.warn("Image too large to cache:", err);
+            }
+        };
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Fixed loader to target the variable
+window.addEventListener('DOMContentLoaded', () => {
+    const savedCustomBg = localStorage.getItem('ps4_custom_bg');
+    if (savedCustomBg) {
+        document.documentElement.style.setProperty('--bg-url', `url('${savedCustomBg}')`);
+    }
+});
+
+    function toggleRetraceMode(btn) {
+    const isRetrace = document.body.classList.toggle('show-retrace');
+    btn.classList.toggle('retrace-active', isRetrace);
+    
+    // Wipe manual style injections
+    btn.style.color = "";
+
+    // Force map refresh
+    save(); 
+}
+
+        let ringHuntActive = false;
+        let state = JSON.parse(localStorage.getItem('ps4_state')) || {};
+        let objState = JSON.parse(localStorage.getItem('ps4_objectives')) || {};
+        let locState = JSON.parse(localStorage.getItem('ps4_locations')) || {};
+        let clearedLocs = JSON.parse(localStorage.getItem('ps4_cleared')) || {};
+
+        const mapData = { dezolis: 'maps/dezolis.png', motavia: 'maps/motavia.png', rykros: 'maps/rykros.png', space: 'maps/space.png' };
+        const mapDimensions = { motavia: { w: 800, h: 662 }, dezolis: { w: 800, h: 339 }, rykros: { w: 365, h: 365 }, space: { w: 320, h: 225 } };
+
+        const itemsData = [
+            { "name": "AeroPrism", "type": "Toggle", "img": "images/aeroprism.png" },
+            { "name": "Alshline", "type": "Toggle", "img": "images/alshline.png" },
+            { "name": "EclipseTorch", "type": "Toggle", "img": "images/torch.png" },
+            { "name": "Elsydeon", "type": "Toggle", "img": "images/elsydeon.png" },
+            { "name": "Hydrofoil", "type": "Toggle", "img": "images/hydrofoil.png" },
+            { "name": "Icedigger", "type": "Toggle", "img": "images/icedigger.png" },
+            { "name": "Sapphire", "type": "Toggle", "img": "images/sapphire.png" },
+            { "name": "Frademantl", "type": "Toggle", "img": "images/frademantl.png" },
+            { "name": "Psychowand", "type": "Toggle", "img": "images/psycowand.png" },
+            { "name": "machinekey", "type": "Toggle", "img": "images/machinekey.png" },
+            { "name": "platekey", "type": "Toggle", "img": "images/platekey.png" },
+            { "name": "vahalkey", "type": "Toggle", "img": "images/vahalkey.png" },
+            { "name": "Algo Ring", "type": "Toggle", "img": "images/aring.png" },
+            { "name": "Mota Ring", "type": "Toggle", "img": "images/mring.png" },
+            { "name": "Dezo Ring", "type": "Toggle", "img": "images/dring.png" },
+            { "name": "Palm Ring", "type": "Toggle", "img": "images/pring.png" },
+            { "name": "Rykr Ring", "type": "Toggle", "img": "images/rring.png" },
+            { "name": "ambereye", "type": "consumable", "img": "images/ambereye.png", "max_quantity": 5 }
+        ];
+
+        const locationsData = [
+    // MOTAVIA
+    { id: "piata", title: "Piata", x: 150, y: 425, planet: "motavia", totalChests: 3 },
+    { id: "passageway", title: "Passageway", x: 100, y: 194, planet: "motavia", totalChests: 2 },
+    { id: "ziofort", title: "Zio's Fort", x: 155, y: 270, planet: "motavia", totalChests: 6 },
+    { id: "nurvus", title: "Nurvus", x: 185, y: 265, planet: "motavia", req: "Psychowand", totalChests: 5 },
+    { id: "birth", title: "Birth Valley", x: 315, y: 225, planet: "motavia", req: "Alshline", totalChests: 3 },
+    { id: "bio", title: "Bio-Plant", x: 360, y: 220, planet: "motavia", req: "Alshline", totalChests: 4 },
+    { id: "wreckage", title: "Wreckage", x: 238, y: 74, planet: "motavia", totalChests: 5 },
+    { id: "vahal", title: "Vahal Fort", x: 530, y: 90, planet: "motavia", reqs: ["vahalkey", "Hydrofoil"], totalChests: 5 },
+    { id: "valley", title: "ValleyMaze", x: 420, y: 348, planet: "motavia", req: "Sapphire", totalChests: 2 },
+    { id: "aiedo", title: "Aiedo", x: 110, y: 156, planet: "motavia", totalChests: 2 },
+    { id: "soldiers", title: "Soldiers' Island", x: 390, y: 470, planet: "motavia", req: "Hydrofoil", totalChests: 6 },
+    { id: "plate", title: "Plate System", x: 645, y: 226, planet: "motavia", req: "platekey", either: ["Hydrofoil", "Icedigger"], totalChests: 8 },
+    { id: "tonoe", title: "Tonoe", x: 490, y: 246, planet: "motavia", req: "Sapphire", totalChests: 8 },
+    { id: "ladea", title: "Ladea Tower", x: 680, y: 420, planet: "motavia", either: ["Hydrofoil", "Icedigger"], totalChests: 6 },
+    { id: "zelan_space", title: "Zelan", x: 375, y: 555, planet: "motavia", req: "machinekey", totalChests: 6 },
+    
+    // DEZOLIS
+    { id: "myst", title: "Myst Vale", x: 118, y: 10, planet: "dezolis", req: "Icedigger", totalChests: 2 },
+    { id: "climate", title: "Climate Control", x: 420, y: 38, planet: "dezolis", req: "Icedigger", totalChests: 6 },
+    { id: "garuberk", title: "Garuberk Tower", x: 630, y: 15, planet: "dezolis", reqs: ["EclipseTorch", "Icedigger"], totalChests: 8 },
+    { id: "esper", title: "Esper Mansion", x: 785, y: 150, planet: "dezolis", reqs: ["Frademantl", "Icedigger"], totalChests: 4 },
+    { id: "gumbious", title: "Gumbious Temple", x: 420, y: 185, planet: "dezolis", req: "Icedigger", totalChests: 4 },
+    { id: "weapon", title: "Weapon Plant", x: 278, y: 258, planet: "dezolis", req: "Icedigger", totalChests: 4 },
+    { id: "hanger", title: "Tyler/Hangar", x: 35, y: 190, planet: "dezolis", totalChests: 2 },
+
+    // RYKROS & SPACE
+    { id: "strength", title: "Tower of Strength", x: 72, y: 45, planet: "rykros", totalChests: 8 },
+    { id: "silence", title: "Silence Tower", x: 185, y: 180, planet: "rykros", totalChests: 4 },
+    { id: "courage", title: "Tower of Courage", x: 305, y: 315, planet: "rykros", totalChests: 6 },
+    { id: "anger", title: "Tower of Anger", x: 80, y: 320, planet: "rykros", req: "Elsydeon", totalChests: 2 },
+    { id: "zelan_space", title: "Zelan", x: 35, y: 50, planet: "space", req: "machinekey", totalChests: 6 },
+    { id: "kuran", title: "Kuran", x: 160, y: 50, planet: "space", totalChests: 6 },
+    { id: "air_castle", title: "Air Castle", x: 90, y: 135, planet: "space", req: "AeroPrism", totalChests: 10 },
+    { id: "air_castle_basement", title: "Air Castle Basement", x: 90, y: 165, planet: "space", req: "AeroPrism", totalChests: 3 },
+
+    // RAPPY CAVE, MILE, KADARY, MOLCUM, MONSEN (Filtered out, count 0 or undefined)
+    { id: "rappy", title: "Rappy Cave", x: 720, y: 515, planet: "motavia", req: "Hydrofoil" },
+    { id: "mile", title: "Mile", x: 210, y: 300, planet: "motavia" },
+    { id: "kadary", title: "Kadary", x: 155, y: 220, planet: "motavia" },
+    { id: "molcum", x: 265, y: 480, planet: "motavia", title: "Molcum" },
+    { id: "monsen", title: "Monsen", x: 590, y: 292, planet: "motavia", either: ["Hydrofoil", "Icedigger"] },
+    { id: "reshel", title: "Reshel", x: 420, y: 120, planet: "dezolis", req: "Icedigger" },
+    { id: "edge", title: "The Edge", x: 175, y: 330, planet: "motavia" },
+
+    // ENTRANCES
+    { id: "retrace-nalya", title: "Nalya - Retrance", x: 255, y: 100, planet: "motavia", isRetrance: true },
+    { id: "retrace-uzo", title: "Uzo - Retrance", x: 35, y: 580, planet: "motavia", isRetrance: true, req: "Hydrofoil" },
+    { id: "retrace-torinco", title: "Torinco - Retrance", x: 640, y: 545, planet: "motavia", isRetrance: true, req: "Hydrofoil" },
+    { id: "retrace-termi", title: "Termi - Retrance", x: 740, y: 350, planet: "motavia", isRetrance: true, either: ["Hydrofoil", "Icedigger"] },
+    { id: "retrace-krup", title: "Krup - Retrance", x: 355, y: 470, planet: "motavia", isRetrance: true },
+    { id: "retrace-ryuon", title: "Ryuon - Retrance", x: 110, y: 220, planet: "dezolis", isRetrance: true },
+    { id: "retrace-raja", title: "Raja Temple - Retrance", x: 120, y: 250, planet: "dezolis", isRetrance: true },
+    { id: "retrace-zosa", title: "Zosa - Retrance", x: 210, y: 90, planet: "dezolis", isRetrance: true, req: "Icedigger" },
+    { id: "retrace-meese", title: "Meese - Retrance", x: 500, y: 135, planet: "dezolis", isRetrance: true, req: "Icedigger" },
+    { id: "retrace-jut", title: "Jut - Retrance", x: 405, y: 205, planet: "dezolis", isRetrance: true, req: "Icedigger" },
+];
+
+        function checkLogic(loc) {
+    if (loc.id === "edge") {
+        if (ringHuntActive) {
+            const rings = ["Algo Ring", "Mota Ring", "Dezo Ring", "Palm Ring", "Rykr Ring"];
+            return rings.every(ring => state[ring] === true);
+        } else {
+            const activeCount = Object.values(objState).filter(obj => obj.active === true).length;
+            return activeCount === 8;
+        }
+    }
+
+    // 1. Check specific requirements (req, reqs, either)
+    if (loc.req && state[loc.req] !== true) return false;
+    if (loc.either && !loc.either.some(r => state[r] === true)) return false;
+    if (loc.reqs && !loc.reqs.every(r => state[r] === true)) return false;
+
+    // 2. The Dezolis Gatekeeper logic
+    if (loc.planet === 'dezolis') {
+        // EXCEPTION LIST: Locations you can reach on foot without the Icedigger
+        // Note: Using id.includes helps catch both standard and 'retrace-' versions
+        const onFoot = (id) => id.includes('hanger') || id.includes('ryuon') || id.includes('raja');
+        
+        if (!onFoot(loc.id)) {
+            if (state['Icedigger'] !== true) return false;
+        }
+    }
+
+    return true;
+}
+
+        function render() {
+    const itemsCont = document.getElementById('grid-items');
+    const locsCont = document.getElementById('grid-locations');
+    if (!itemsCont || !locsCont) return;
+
+    // --- ITEM RENDERING ---
+    itemsCont.innerHTML = '';
+    itemsData.forEach(item => {
+        const div = document.createElement('div');
+        let val = state[item.name];
+        if (item.name === 'ambereye') val = state['ambereye_count'] || 0;
+        else val = state[item.name] || (item.type === 'Toggle' ? false : 0);
+
+        const isActive = item.type === 'Toggle' ? val === true : val > 0;
+        div.className = `item ${isActive ? 'active' : ''}`;
+        const img = document.createElement('img');
+        img.src = item.img;
+        div.appendChild(img);
+        if (item.type === 'consumable') {
+            const c = document.createElement('span');
+            c.className = 'counter';
+            c.innerText = val;
+            div.appendChild(c);
+        }
+        div.onclick = () => {
+            if (item.type === 'Toggle') state[item.name] = !state[item.name];
+            else state[item.name] = Math.min(item.max_quantity || 99, (state[item.name] || 0) + 1);
+            save();
+        };
+        div.oncontextmenu = (e) => {
+            e.preventDefault();
+            if (item.type === 'consumable') state[item.name] = Math.max(0, (state[item.name] || 0) - 1);
+            save();
+        };
+        itemsCont.appendChild(div);
+    });
+
+    // --- LOCATION RENDERING (Sorted by Planet then Alphabetical) ---
+    locsCont.innerHTML = '';
+    locsCont.style.display = "grid";
+    locsCont.style.gridTemplateColumns = "1fr 1fr";
+
+    // 1. Define the Planet Priority Order (Colour Blocks)
+    const planetOrder = { 
+        'motavia': 1, // Orange
+        'dezolis': 2, // Blue
+        'rykros':  3, // Magenta
+        'space':   4  // White
+    };
+
+    // 2. Sort the data: First by Planet Priority, then by Title
+    const sortedLocations = [...locationsData].sort((a, b) => {
+        const priorityA = planetOrder[a.planet] || 99;
+        const priorityB = planetOrder[b.planet] || 99;
+
+        if (priorityA !== priorityB) {
+            return priorityA - priorityB; // Primary Sort: Planet Color
+        }
+        return a.title.localeCompare(b.title); // Secondary Sort: Alphabetical
+    });
+
+    // 3. Loop through the sorted array
+    sortedLocations.forEach(loc => {
+        const container = document.createElement('div');
+        const autoClearMapping = {
+            'silence': 'Silence_Cleared', 'aiedo': 'Aiedo_Cleared', 'strength': 'Strength_Cleared', 'hanger': 'Hanger_Cleared',
+            'kadary': "Kadary_Cleared", 'ziofort': "ZiosFort_Cleared", 'nurvus': "Nurvus_Cleared", 'mile': "Mile_Cleared",
+            'edge': "TheEdge_Cleared", 'piata': "Piata_Cleared", 'birth': "BirthValley_Cleared", 'bio': "BioPlant_Cleared",
+            'wreckage': "Wreckage_Cleared", 'vahal': "VahalFort_Cleared", 'molcum': "Molcum_Cleared", 'valley': "ValleyMaze_Cleared",
+            'tonoe': "Tonoe_Cleared", 'soldiers': "SoldiersIsland_Cleared", 'monsen': "Monsen_Cleared", 'plate': "PlateSystem_Cleared",
+            'ladea': "LadeaTower_Cleared", 'rappy': "RappyCave_Cleared", 'zelan': "Zelan_Cleared", 'myst': "MystVale_Cleared",
+            'climate': "ClimateControl_Cleared", 'reshel': "Reshel_Cleared", 'garuberk': "GaruberkTower_Cleared",
+            'esper': "EsperMansion_Cleared", 'gumbious': "GumbiousTemple_Cleared", 'weapon': "WeaponPlant_Cleared",
+            'courage': "TowerofCourage_Cleared", 'anger': "TowerofAnger_Cleared", 'kuran': "Kuran_Cleared",
+            'air_castle': "AirCastle_Cleared", 'passageway': "Passageway_Cleared", 'zelan_space': "Zelan_Cleared",
+            'air_castle_basement': "AirCastleBasement_Cleared", 'retrace-nalya': 'Nalya_Entered',
+            'retrace-uzo': 'Uzo_Entered', 'retrace-torinco': 'Torinco_Entered',
+            'retrace-termi': 'Termi_Entered', 'retrace-krup': 'Krup_Entered',
+            'retrace-ryuon': 'Ryuon_Entered', 'retrace-raja': 'Raja_Entered',
+            'retrace-zosa': 'Zosa_Entered', 'retrace-meese': 'Meese_Entered',
+            'retrace-jut': 'Jut_Entered'
+        };
+
+        const autoKey = autoClearMapping[loc.id];
+        const isAutoCleared = autoKey ? state[autoKey] === true : false;
+        const isRetrance = loc.isRetrance === true;
+        
+        container.className = `loc-container loc-${loc.planet} ${isAutoCleared ? 'auto-cleared' : ''} ${isRetrance ? 'retrace-only' : ''}`;
+        
+        const title = document.createElement('div');
+        title.className = 'loc-title';
+        title.innerHTML = loc.title + (isAutoCleared ? ' <span style="color: red;">(DONE)</span>' : '');
+        
+        const input = document.createElement('input');
+        input.className = 'loc-input';
+        input.id = `loc-${loc.id}`;
+        input.value = locState[loc.id] || '';
+        input.placeholder = isRetrance ? 'Notes...' : (isAutoCleared ? 'Cleared' : 'Notes...');
+        input.oninput = () => saveLocations();
+        
+        container.appendChild(title);
+        container.appendChild(input);
+        locsCont.appendChild(container);
+    });
+}
+
+        function switchMap(target, btn) {
+            const container = document.getElementById('maps-container');
+            if (!container) return;
+            container.innerHTML = '';
+            target === 'all' ? container.classList.remove('single-view') : container.classList.add('single-view');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            const planets = target === 'all' ? ['dezolis', 'motavia', 'rykros', 'space'] : [target];
+
+            planets.forEach(p => {
+                const dim = mapDimensions[p];
+                const box = document.createElement('div');
+                box.className = `map-box loc-${p}`; 
+                box.style.backgroundImage = `url('${mapData[p]}')`;
+                box.style.aspectRatio = `${dim.w} / ${dim.h}`;
+                container.appendChild(box);
+                
+                locationsData.filter(l => l.planet === p).forEach(l => {
+                    const pin = document.createElement('div');
+                    const autoClearMapping = { 
+                        'silence': 'Silence_Cleared', 'aiedo': 'Aiedo_Cleared', 'strength': 'Strength_Cleared', 'hanger': 'Hanger_Cleared',
+                        'kadary': "Kadary_Cleared", 'ziofort': "ZiosFort_Cleared", 'nurvus': "Nurvus_Cleared", 'mile': "Mile_Cleared",
+                        'edge': "TheEdge_Cleared", 'piata': "Piata_Cleared", 'birth': "BirthValley_Cleared", 'bio': "BioPlant_Cleared",
+                        'wreckage': "Wreckage_Cleared", 'vahal': "VahalFort_Cleared", 'molcum': "Molcum_Cleared", 'valley': "ValleyMaze_Cleared",
+                        'tonoe': "Tonoe_Cleared", 'soldiers': "SoldiersIsland_Cleared", 'monsen': "Monsen_Cleared", 'plate': "PlateSystem_Cleared",
+                        'ladea': "LadeaTower_Cleared", 'rappy': "RappyCave_Cleared", 'zelan': "Zelan_Cleared", 'myst': "MystVale_Cleared",
+                        'climate': "ClimateControl_Cleared", 'reshel': "Reshel_Cleared", 'garuberk': "GaruberkTower_Cleared",
+                        'esper': "EsperMansion_Cleared", 'gumbious': "GumbiousTemple_Cleared", 'weapon': "WeaponPlant_Cleared",
+                        'courage': "TowerofCourage_Cleared", 'anger': "TowerofAnger_Cleared", 'kuran': "Kuran_Cleared",
+                        'air_castle': "AirCastle_Cleared", 'passageway': "Passageway_Cleared", 'zelan_space': "Zelan_Cleared",
+                        'air_castle_basement': "AirCastleBasement_Cleared", 'retrace-nalya': 'Nalya_Entered',
+                        'retrace-uzo': 'Uzo_Entered', 'retrace-torinco': 'Torinco_Entered',
+                        'retrace-termi': 'Termi_Entered', 'retrace-krup': 'Krup_Entered',
+                        'retrace-ryuon': 'Ryuon_Entered', 'retrace-raja': 'Raja_Entered',
+                        'retrace-zosa': 'Zosa_Entered', 'retrace-meese': 'Meese_Entered',
+                        'retrace-jut': 'Jut_Entered'
+                    };
+                    const autoKey = autoClearMapping[l.id];
+const isAutoCleared = autoKey ? (state[autoKey] === true) : false;
+const isCleared = clearedLocs[l.id] || isAutoCleared;
+const isAccessible = checkLogic(l);
+const isRetrance = l.isRetrance === true;
+
+// --- NEW ORANGE LOGIC ---
+let logicClass = "";
+const hasPrism = state["AeroPrism"] === true; // Assuming your autotracker sets this
+
+if (isCleared) {
+    logicClass = 'cleared';
+} else if (l.id === "air_castle") {
+    // If accessible via space but missing Prism, it's Orange (The Long Way)
+    // Otherwise, if you have the Prism, it's Green (Accessible)
+    logicClass = hasPrism ? 'accessible' : 'orange';
+} else {
+    logicClass = isAccessible ? 'accessible' : 'locked';
+}
+
+const pinSize = target === 'all' ? 'pin-sm' : 'pin-lg';
+
+pin.className = `map-pin ${logicClass} ${isRetrance ? 'retrace-only' : ''} ${pinSize}`;
+
+// --- END NEW LOGIC ---
+
+if (!l.isRetrance && l.totalChests > 0) {
+    pin.innerText = l.totalChests;
+}
+pin.style.left = `${(l.x / dim.w) * 100}%`; 
+pin.style.top = `${(l.y / dim.h) * 100}%`;
+                    // --- Tooltip & Notes Handling ---
+let tooltipText = "";
+const userNote = locState[l.id] || "";
+const isRetranceModeActive = document.body.classList.contains('show-retrace');
+
+// 1. Gather logic requirements
+let reqParts = [];
+if (l.req) reqParts.push(`Requirements: ${l.req}`);
+if (l.reqs) reqParts.push(`Requirements: ${l.reqs.join(' + ')}`);
+if (l.either) reqParts.push(`Requirements: Either: ${l.either.join(' or ')}`);
+let requirementsString = reqParts.length > 0 ? reqParts.join(' | ') : 'No Requrements';
+
+// 2. Format the Chest Count line (Only if it has chests)
+let chestInfo = l.totalChests ? `Chests: ${l.totalChests}` : "";
+
+// 3. Build Tooltip based on Mode
+if (isRetranceModeActive) {
+    // Retrance Mode Tooltip
+    tooltipText = `ACTUALLY: ${userNote || "???"}`;
+    if (chestInfo) tooltipText += `\n${chestInfo}`;
+    if (reqParts.length > 0) tooltipText += `\n(${requirementsString})`;
+} else {
+    // Normal Mode Tooltip
+    tooltipText = requirementsString;
+    if (chestInfo) tooltipText = `${chestInfo}\n${tooltipText}`; // Put checks at the top
+    if (userNote.trim() !== "") tooltipText += `\nNote: ${userNote}`;
+}
+
+pin.title = `${l.title}\n${tooltipText}`;
+
+                    pin.onclick = (e) => {
+                        e.stopPropagation();
+                        if (!isRetrance && !isAccessible && !isCleared) return;
+                        clearedLocs[l.id] = !clearedLocs[l.id];
+                        localStorage.setItem('ps4_cleared', JSON.stringify(clearedLocs));
+                        switchMap(target, btn);
+                    };
+                    box.appendChild(pin);
+                });
+            });
+        }
+
+        async function startAutotracker() {
+    const led = document.getElementById('status-led');
+    const statusText = document.getElementById('status-text');
+    
+    setInterval(async () => {
+        try {
+            const response = await fetch('http://localhost:8080/data');
+            if (response.ok) {
+                const newData = await response.json();
+                
+                // --- GLOBAL HOTKEY INTERCEPTORS ---
+                if (newData["Remote_Toggle"] === true) {
+                    toggleTimer(); // Starts or Stops the timer
+                }
+                if (newData["Remote_Reset"] === true) {
+                    resetTimer();  // Resets the timer to 00:00:00
+                }
+                // ----------------------------------
+
+                let changed = false;
+                for (let key in newData) {
+                    // Skip processing the volatile hotkey signals as permanent state flags
+                    if (key === "Remote_Toggle" || key === "Remote_Reset") continue;
+
+                    if (localStorage.getItem('persistent_' + key) === 'true') newData[key] = true;
+                    if (newData[key] === true) localStorage.setItem('persistent_' + key, 'true');
+                    if (state[key] !== newData[key]) {
+                        state[key] = newData[key];
+                        changed = true;
+                    }
+                }
+                
+                led.classList.add('connected');
+                statusText.innerText = "Connected";
+                if (changed) save();
+            }
+        } catch (err) {
+            led.classList.remove('connected');
+            statusText.innerText = "Disconnected";
+        }
+    }, 1000);
+}
+
+        function save() { 
+            localStorage.setItem('ps4_state', JSON.stringify(state)); 
+            if (ringHuntActive) {
+                const rings = ["Algo Ring", "Mota Ring", "Dezo Ring", "Palm Ring", "Rykr Ring"];
+                rings.forEach((ring, index) => {
+                    if (objState[`obj-${index + 1}`]) objState[`obj-${index + 1}`].active = !!state[ring];
+                });
+                localStorage.setItem('ps4_objectives', JSON.stringify(objState));
+                initObjectives();
+            }
+            render(); 
+            const activeTab = document.querySelector('.tab-btn.active');
+            if (activeTab) {
+                const txt = activeTab.innerText.toLowerCase();
+                const target = txt.includes('all') ? 'all' : (txt.includes('space') ? 'space' : txt);
+                switchMap(target, activeTab); 
+            }
+        }
+
+        function setRingHuntMode() {
+    ringHuntActive = !ringHuntActive;
+    const btn = document.querySelector('.mode-btn');
+    if (btn) {
+        // Toggle the class. CSS handles the Blue -> White flip.
+        btn.classList.toggle('active-mode', ringHuntActive);
+        
+        // Wipe any old manual style injections
+        btn.style.backgroundColor = "";
+        btn.style.color = "";
+    }
+    // ... rest of your ring logic ...
+    initObjectives();
+    render();
+
+    
+    // ... the rest of your ring logic stays the same ...
+    const rings = ["Algo Ring", "Mota Ring", "Dezo Ring", "Palm Ring", "Rykr Ring"];
+    rings.forEach((ring, i) => {
+        const idx = i + 1;
+        objState[`obj-${idx}`] = ringHuntActive ? { text: ring, active: !!state[ring] } : { text: '', active: false };
+    });
+    localStorage.setItem('ps4_objectives', JSON.stringify(objState));
+    initObjectives();
+    render();
+}
+
+        let startTime, elapsedTime = 0, timerInterval, isRunning = false;
+        function toggleTimer() {
+            if (!isRunning) {
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateTimer, 10);
+                document.getElementById('timer-toggle').innerText = 'STOP';
+                isRunning = true;
+            } else {
+                clearInterval(timerInterval);
+                document.getElementById('timer-toggle').innerText = 'START';
+                isRunning = false;
+            }
+        }
+        function resetTimer() { clearInterval(timerInterval); elapsedTime = 0; isRunning = false; document.getElementById('timer-display').innerText = '00:00:00'; document.getElementById('timer-toggle').innerText = 'START'; }
+        function updateTimer() {
+            elapsedTime = Date.now() - startTime;
+            let time = new Date(elapsedTime);
+            let h = String(Math.floor(elapsedTime / 3600000)).padStart(2, '0');
+            let m = String(time.getUTCMinutes()).padStart(2, '0');
+            let s = String(time.getUTCSeconds()).padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
+        }
+        function handleGlobalKeys(e) { if (e.code === "Space" && e.target.tagName !== 'INPUT') { e.preventDefault(); toggleTimer(); } }
+
+        function initObjectives() {
+    const container = document.getElementById('objectives-container');
+    if (!container) return;
+
+    if (ringHuntActive) container.classList.add('ring-hunt-layout');
+    else container.classList.remove('ring-hunt-layout');
+
+    container.innerHTML = '';
+
+    for (let i = 1; i <= 8; i++) {
+        const key = `obj-${i}`;
+        if (!objState[key]) objState[key] = { text: '', active: false };
+        const data = objState[key];
+
+        const div = document.createElement('div');
+        // Force the class based strictly on the stored data
+        div.className = `obj-container ${data.active ? 'done' : ''}`;
+        div.id = `cont-${i}`;
+
+        const input = document.createElement('input');
+        input.className = 'obj-input';
+        input.id = `obj-${i}`;
+        input.value = data.text;
+        input.placeholder = `Objective ${i}...`;
+
+        if (ringHuntActive && i <= 5) {
+            input.readOnly = true;
+            input.style.cursor = 'default';
+        }
+
+        // --- THE FIXED TOGGLE ---
+        const handleRightClick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (ringHuntActive && i <= 5) return;
+
+            // 1. Flip the data boolean
+            objState[key].active = !objState[key].active;
+            
+            // 2. Sync the class exactly to the new boolean
+            if (objState[key].active) {
+                div.classList.add('done');
+            } else {
+                div.classList.remove('done');
+            }
+
+            saveObjectives();
+            save();
+        };
+
+        div.addEventListener('contextmenu', handleRightClick);
+        input.addEventListener('contextmenu', handleRightClick);
+        
+        input.oninput = () => {
+            objState[key].text = input.value;
+            saveObjectives();
+        };
+
+        div.appendChild(input);
+        container.appendChild(div);
+    }
+}
+        function toggleObj(idx) {
+    if (ringHuntActive && idx <= 5) return;
+    const key = `obj-${idx}`;
+    const cont = document.getElementById(`cont-${idx}`);
+    
+    if (!objState[key]) objState[key] = { text: '', active: false };
+    
+    // MASTER TOGGLE
+    objState[key].active = !objState[key].active;
+    
+    if (cont) {
+        if (objState[key].active) {
+            cont.classList.add('done');
+        } else {
+            cont.classList.remove('done');
+        }
+    }
+    
+    saveObjectives();
+    save(); // Force localstorage sync
+}
+
+function saveObjectives() {
+    for (let i = 1; i <= 8; i++) {
+        const input = document.getElementById(`obj-${i}`);
+        const cont = document.getElementById(`cont-${i}`);
+        if(input && cont) {
+            // Update the text, but keep the 'active' state synced with the CSS class
+            objState[`obj-${i}`] = { 
+                text: input.value, 
+                active: cont.classList.contains('done') 
+            };
+        }
+    }
+    localStorage.setItem('ps4_objectives', JSON.stringify(objState));
+}
+        function saveLocations() {
+            locationsData.forEach(loc => { 
+                const el = document.getElementById(`loc-${loc.id}`); 
+                if (el) locState[loc.id] = el.value; 
+            });
+            localStorage.setItem('ps4_locations', JSON.stringify(locState));
+            
+            // HATE INEFFICIENCIES FIX:
+            // Instead of a full render(), we just refresh the map tooltips
+            // so your typing shows up instantly on the map pins.
+            const activeTab = document.querySelector('.tab-btn.active');
+            if (activeTab) {
+                const txt = activeTab.innerText.toLowerCase();
+                const target = txt.includes('all') ? 'all' : (txt.includes('space') ? 'space' : txt);
+                switchMap(target, activeTab); 
+            }
+        }
+
+        async function resetTracker() {
+    if (confirm("Reset everything?")) {
+        try { 
+            // Trigger the Python wipe
+            await fetch('http://localhost:8080/reset', { method: 'POST' }); 
+            console.log("Python sniffer reset triggered.");
+        } catch (err) {
+            console.error("Could not reach Python sniffer for reset:", err);
+        }
+        
+        // Clear the browser's local memory
+        ringHuntActive = false; 
+        state = {}; objState = {}; locState = {}; clearedLocs = {};
+        localStorage.clear();
+
+        // UI Cleanup
+        const ringBtn = document.querySelector('.mode-btn');
+        if (ringBtn) ringBtn.classList.remove('active-mode');
+        const objCont = document.getElementById('objectives-container');
+        if (objCont) objCont.classList.remove('ring-hunt-layout');
+
+        document.querySelectorAll('.loc-input').forEach(i => i.value = '');
+        
+        initObjectives(); 
+        render(); 
+        resetTimer();
+        switchMap('all', document.getElementById('btn-all'));
+    }
+}
+
+        window.onload = () => {
+            const savedBg = localStorage.getItem('ps4_custom_bg');
+if (savedBg) {
+    document.documentElement.style.setProperty('--bg-url', `url('${savedBg}')`);
+    document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.6)), url('${savedBg}')`;
+}
+            initResizeHandles();
+            initObjectives(); 
+            render(); 
+            switchMap('all', document.getElementById('btn-all')); 
+            startAutotracker(); 
+        };
+    </script>
+</body>
+</html>
