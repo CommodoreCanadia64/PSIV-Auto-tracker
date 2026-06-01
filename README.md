@@ -12,12 +12,12 @@ Emulator Requirement: This tracker requires BizHawk 2.11  and the gens+ core to 
 
 Lua Setup: Run the provided Lua script within BizHawk to begin exporting game data.
 
-run the python (bridge) script (linux)
+run the python (bridge) script (linux) or
 download and launch the sniffer.exe (windows) 
 
 https://commodorecanadia64.github.io/PSIV-Auto-tracker/
 
-Verify Connection: A Green LED at the bottom of the page confirms the dashboard is successfully talking to the system tray app.
+Verify Connection: A Green LED at the top left of the page confirms the dashboard is successfully talking to the system tray app.
 
 
 How to Use
