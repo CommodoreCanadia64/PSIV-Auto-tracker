@@ -12,7 +12,8 @@ Emulator Requirement: This tracker requires BizHawk 2.11 to function correctly.
 
 Lua Setup: Run the provided Lua script within BizHawk to begin exporting game data.
 
-run the python (bridge) script
+run the python (bridge) script (linux)
+download and launch the sniffer.exe (windows) 
 
 https://commodorecanadia64.github.io/PSIV-Auto-tracker/
 
