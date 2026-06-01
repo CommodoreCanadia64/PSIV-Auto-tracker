@@ -8,7 +8,7 @@ This project consists of three parts: a System Tray Application (the .exe) that 
 
 
 Installation
-Emulator Requirement: This tracker requires BizHawk 2.11 to function correctly.
+Emulator Requirement: This tracker requires BizHawk 2.11  and the gens+ core to function correctly.
 
 Lua Setup: Run the provided Lua script within BizHawk to begin exporting game data.
 
