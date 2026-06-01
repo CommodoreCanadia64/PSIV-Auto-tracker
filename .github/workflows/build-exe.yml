@@ -21,10 +21,10 @@ jobs:
 
     - name: Compile to Standalone EXE
       run: |
-        pyinstaller --onefile --noconsole sniffer.py
+        pyinstaller --onefile --noconsole relay_sniffer.py
 
     - name: Upload Finished EXE Asset
       uses: actions/upload-artifact@v4
       with:
-        name: PSIV-Sniffer-Windows
-        path: dist/sniffer.exe
+        name: relay_sniffer-Windows
+        path: dist/relay_sniffer.exe
