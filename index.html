@@ -636,6 +636,162 @@ h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 5px;
 
     <script>
 
+        // 1. Define the Wreckage tracking object
+const locationChestRegistry = {
+    // --- MOTAVIA ---
+    "piata": [
+        "Piata_Chest_18", "Piata_Chest_19", "Piata_Chest_1A"
+    ],
+    "passageway": [
+        "Passageway_Chest_35", "Passageway_Cleared"
+    ],
+    "ziofort": [
+        "ZioFort_Chest_39", "ZioFort_Chest_3A", "ZioFort_Chest_3B", 
+        "ZioFort_Chest_3C", "ZioFort_Chest_3D", "ZioFort_Chest_3E"
+    ],
+    "nurvus": [
+        "Nurvus_Chest_4D", "Nurvus_Chest_4E", "Nurvus_Chest_4F", 
+        "Nurvus_Chest_51", "Nurvus_Chest_52"
+    ],
+    "birth": [
+        "BirthValley_Chest_1B", "BirthValley_Chest_1C", "BirthValley_Cleared"
+    ],
+    "bio": [
+        "BioPlant_Chest_26", "BioPlant_Chest_29", "BioPlant_Chest_2B", 
+        "BioPlant_Chest_2C"
+    ],
+    "wreckage": [
+        "Wreckage_Chest_2D", "Wreckage_Chest_2E", "Wreckage_Chest_2F", 
+        "Wreckage_Chest_30", "Wreckage_Chest_31"
+    ],
+    "vahal": [
+        "VahalFort_Chest_8C", "VahalFort_Chest_8D", "VahalFort_Chest_8E", 
+        "VahalFort_Chest_8F", "VahalFort_Chest_90"
+    ],
+    "valley": [
+        "ValleyMaze_Chest_1D", "ValleyMaze_Cleared"
+    ],
+    "aiedo": [
+        "Aiedo_Chest_32", "Aiedo_Cleared"
+    ],
+    "soldiers": [
+        "SoldiersIsland_Chest_86", "SoldiersIsland_Chest_87", "SoldiersIsland_Chest_88", 
+        "SoldiersIsland_Chest_89", "SoldiersIsland_Chest_8A", "SoldiersIsland_Cleared"
+    ],
+    "plate": [
+        "PlateSystem_Chest_3F", "PlateSystem_Chest_40", "PlateSystem_Chest_41", 
+        "PlateSystem_Chest_42", "PlateSystem_Chest_43", "PlateSystem_Chest_44", 
+        "PlateSystem_Chest_45", "PlateSystem_Chest_46"
+    ],
+    "tonoe": [
+        "Tonoe_Chest_1F", "Tonoe_Chest_20", "Tonoe_Chest_21", "Tonoe_Chest_22", 
+        "Tonoe_Chest_23", "Tonoe_Chest_24", "Tonoe_Chest_A6", "Tonoe_Cleared"
+    ],
+    "ladea": [
+        "LadeaTower_Cleared", "LadeaTower_Chest_47", "LadeaTower_Chest_48", 
+        "LadeaTower_Chest_49", "LadeaTower_Chest_4A", "LadeaTower_Chest_4B", 
+        "LadeaTower_Chest_A8"
+    ],
+
+    // --- DEZOLIS ---
+    "myst": [
+        "MystVale_Chest_63", "MystVale_Chest_64"
+    ],
+    "climate": [
+        "ClimateControl_Chest_65", "ClimateControl_Chest_66", "ClimateControl_Chest_67", 
+        "ClimateControl_Chest_68", "ClimateControl_Chest_69", "ClimateControl_Chest_6A"
+    ],
+    "garuberk": [
+        "GaruberkTower_Chest_10", "GaruberkTower_Chest_11", "GaruberkTower_Chest_12", 
+        "GaruberkTower_Chest_13", "GaruberkTower_Chest_14", "GaruberkTower_Chest_15", 
+        "GaruberkTower_Chest_16", "GaruberkTower_Chest_17"
+    ],
+    "esper": [
+        "EsperMansion_Chest_6C", "EsperMansion_Chest_6D", "EsperMansion_Chest_6E", 
+        "EsperMansion_Chest_6F"
+    ],
+    "gumbious": [
+        "GumbiousTemple_Chest_70", "GumbiousTemple_Chest_71", 
+        "GumbiousTemple_Chest_72", "GumbiousTemple_Cleared"
+    ],
+    "weapon": [
+        "WeaponPlant_Cleared", "WeaponPlant_Chest_74", "WeaponPlant_Chest_76", 
+        "WeaponPlant_Chest_77"
+    ],
+    "hanger": [
+        "Hangar_Chest_59", "Hangar_Chest_5A"
+    ],
+
+    // --- RYKROS & OUTER SPACE ---
+    "strength": [
+        "Strength_Cleared", "TowerOfStrength_Chest_95", "TowerOfStrength_Chest_96", 
+        "TowerOfStrength_Chest_97", "TowerOfStrength_Chest_98", "TowerOfStrength_Chest_99",
+        "TowerOfStrength_Chest_A1", "TowerOfStrength_Chest_A2"
+    ],
+    "silence": [
+        "SilenceTower_Chest_91", "Silence_Cleared", "SilenceTower_Chest_93", 
+        "SilenceTower_Chest_94"
+    ],
+    "courage": [
+        "TowerofCourage_Cleared", "TowerOfCourage_Chest_9B", "TowerOfCourage_Chest_9C", 
+        "TowerOfCourage_Chest_9D", "TowerOfCourage_Chest_9E", "TowerOfCourage_Chest_A4", 
+        "TowerOfCourage_Chest_A5"
+    ],
+    "anger": [
+        "TowerOfAnger_Chest_9F", "TowerOfAnger_Chest_A0"
+    ],
+    "zelan_space": [
+        "Zelan_Chest_53", "Zelan_Chest_54", "Zelan_Chest_55", 
+        "Zelan_Chest_56", "Zelan_Chest_57", "Zelan_Chest_0B"
+    ],
+    "kuran": [
+        "Kuran_Chest_5C", "Kuran_Chest_5E", 
+        "Kuran_Chest_5F", "Kuran_Chest_60", "Kuran_Chest_61", 
+        "Kuran_Chest_62"
+    ],
+    "air_castle": [
+        "AirCastle_Chest_79", "AirCastle_Chest_7A", "AirCastle_Chest_7B", 
+        "AirCastle_Chest_7C", "AirCastle_Chest_7D", "AirCastle_Chest_7E", 
+        "AirCastle_Chest_7F", "AirCastle_Chest_80", "AirCastle_Chest_81",
+        "AirCastle_Chest_82"
+    ],    
+    "air_castle_basement": [    
+        "AirCastle_Chest_84", "AirCastle_Chest_85", "AirCastle_Chest_0C"
+    ],
+    "space": [
+        "Space_Chest_0D", "Space_Chest_A1", "Space_Chest_A2", 
+        "Space_Chest_A3", "Space_Chest_A5"
+    ]
+};
+
+// 2. Run this function inside your main socket/fetch UI update loop
+function updateWreckagePin(serverGameData) {
+    const pinElement = document.getElementById("wreckage-pin");
+    if (!pinElement) return;
+
+    // Count how many of the 5 flags are currently True
+    let openedCount = 0;
+    wreckageLocation.chestKeys.forEach(key => {
+        if (serverGameData[key] === true) {
+            openedCount++;
+        }
+    });
+
+    // Calculate remaining chests
+    let remaining = wreckageLocation.totalChests - openedCount;
+
+    // 3. Update the HTML display
+    if (remaining === 0) {
+        pinElement.innerText = "✓";
+        pinElement.className = "map-pin pin-cleared"; 
+    } else {
+        pinElement.innerText = remaining;
+        pinElement.className = "map-pin pin-active";
+    }
+}
+
+
+
     function initResizeHandles() {
         document.querySelectorAll('.panel').forEach(panel => {
         const handle = document.createElement('div');
@@ -749,7 +905,7 @@ window.addEventListener('DOMContentLoaded', () => {
     { id: "soldiers", title: "Soldiers' Island", x: 390, y: 470, planet: "motavia", req: "Hydrofoil", totalChests: 6 },
     { id: "plate", title: "Plate System", x: 645, y: 226, planet: "motavia", req: "platekey", either: ["Hydrofoil", "Icedigger"], totalChests: 8 },
     { id: "tonoe", title: "Tonoe", x: 490, y: 246, planet: "motavia", req: "Sapphire", totalChests: 8 },
-    { id: "ladea", title: "Ladea Tower", x: 680, y: 420, planet: "motavia", either: ["Hydrofoil", "Icedigger"], totalChests: 6 },
+    { id: "ladea", title: "Ladea Tower", x: 680, y: 420, planet: "motavia", either: ["Hydrofoil", "Icedigger"], totalChests: 7 },
     { id: "zelan_space", title: "Zelan", x: 375, y: 555, planet: "motavia", req: "machinekey", totalChests: 6 },
     
     // DEZOLIS
@@ -993,7 +1149,27 @@ pin.className = `map-pin ${logicClass} ${isRetrance ? 'retrace-only' : ''} ${pin
 // --- END NEW LOGIC ---
 
 if (!l.isRetrance && l.totalChests > 0) {
-    pin.innerText = l.totalChests;
+    // Check if we have mapped chest keys for this specific location ID
+    const associatedChests = locationChestRegistry[l.id];
+    
+    if (associatedChests) {
+        let openedCount = 0;
+        associatedChests.forEach(key => {
+            if (state[key] === true) openedCount++;
+        });
+        
+        let remaining = l.totalChests - openedCount;
+        
+        if (remaining <= 0) {
+            pin.innerText = "✓";
+            logicClass = 'cleared'; // Forces grayed-out "done" styling
+        } else {
+            pin.innerText = remaining;
+        }
+    } else {
+        // Fallback: If you haven't added keys for a zone yet, just show the maximum count
+        pin.innerText = l.totalChests;
+    }
 }
 pin.style.left = `${(l.x / dim.w) * 100}%`; 
 pin.style.top = `${(l.y / dim.h) * 100}%`;
