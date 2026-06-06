@@ -179,7 +179,7 @@ def watch_file():
 
                             game_data["Molcum_Cleared"]            = (parts[3]  & 0x40) != 0
                             game_data["Monsen_Cleared"]            = (parts[8]  & 0x02) != 0
-                            game_data["RappyCave_Cleared"]         = (parts[22] & 0x01) != 0
+                            game_data["RappyCave_Cleared"]         = (parts[24] & 0x20) != 0
                             game_data["Zelan_Cleared"]             = (parts[15] & 0x80) != 0
                             game_data["Zelan_Chest_0B"]            = (parts[103] & 0x10) != 0
                             game_data["Zelan_Chest_53"]            = (parts[112] & 0x10) != 0  
@@ -337,9 +337,7 @@ def watch_file():
                             game_data["TowerOfCourage_Chest_9C"]   = (parts[121] & 0x08) != 0  
                             game_data["TowerOfCourage_Chest_9D"]   = (parts[121] & 0x04) != 0  
                             game_data["TowerOfCourage_Chest_9E"]   = (parts[121] & 0x02) != 0
-                            game_data["TowerOfCourage_Chest_A4"]   = (parts[122] & 0x08) != 0  
-                            game_data["TowerOfCourage_Chest_A5"]   = (parts[122] & 0x04) != 0    
-
+                            game_data["TowerOfCourage_Chest_A4"]   = (parts[122] & 0x08) != 0     
 
                             game_data["SoldiersIsland_Cleared"]    = (parts[103] & 0x04) != 0
                             game_data["SoldiersIsland_Chest_86"]   = (parts[118] & 0x02) != 0  
