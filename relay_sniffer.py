@@ -157,42 +157,200 @@ def watch_file():
 
                             # --- EVENT FLAGS ---
                             game_data["Wreckage_Cleared"]          = (parts[9]  & 0x80) != 0
+                            game_data["Wreckage_Chest_2D"]         = (parts[107] & 0x04) != 0  
+                            game_data["Wreckage_Chest_2E"]         = (parts[107] & 0x02) != 0  
+                            game_data["Wreckage_Chest_2F"]         = (parts[107] & 0x01) != 0  
+                            game_data["Wreckage_Chest_30"]         = (parts[108] & 0x80) != 0  
+                            game_data["Wreckage_Chest_31"]         = (parts[108] & 0x40) != 0  
+
                             game_data["ZiosFort_Cleared"]          = (parts[9]  & 0x20) != 0
+                            game_data["ZioFort_Chest_39"]          = (parts[109] & 0x40) != 0  
+                            game_data["ZioFort_Chest_3A"]          = (parts[109] & 0x20) != 0  
+                            game_data["ZioFort_Chest_3B"]          = (parts[109] & 0x10) != 0  
+                            game_data["ZioFort_Chest_3C"]          = (parts[109] & 0x08) != 0  
+                            game_data["ZioFort_Chest_3D"]          = (parts[109] & 0x04) != 0  
+                            game_data["ZioFort_Chest_3E"]          = (parts[109] & 0x02) != 0  
+
                             game_data["Mile_Cleared"]              = (parts[4]  & 0x08) != 0
                             game_data["Piata_Cleared"]             = (parts[2]  & 0x01) != 0
+                            game_data["Piata_Chest_18"]            = (parts[105] & 0x80) != 0  
+                            game_data["Piata_Chest_19"]            = (parts[105] & 0x40) != 0  
+                            game_data["Piata_Chest_1A"]            = (parts[105] & 0x20) != 0 
+
                             game_data["Molcum_Cleared"]            = (parts[3]  & 0x40) != 0
                             game_data["Monsen_Cleared"]            = (parts[8]  & 0x02) != 0
                             game_data["RappyCave_Cleared"]         = (parts[22] & 0x01) != 0
                             game_data["Zelan_Cleared"]             = (parts[15] & 0x80) != 0
+                            game_data["Zelan_Chest_0B"]            = (parts[103] & 0x10) != 0
+                            game_data["Zelan_Chest_53"]            = (parts[112] & 0x10) != 0  
+                            game_data["Zelan_Chest_54"]            = (parts[112] & 0x08) != 0  
+                            game_data["Zelan_Chest_55"]            = (parts[112] & 0x04) != 0  
+                            game_data["Zelan_Chest_56"]            = (parts[112] & 0x02) != 0  
+                            game_data["Zelan_Chest_57"]            = (parts[112] & 0x01) != 0  
+
                             game_data["MystVale_Cleared"]          = (parts[19] & 0x40) != 0
+                            game_data["MystVale_Chest_63"]         = (parts[114] & 0x10) != 0  
+                            game_data["MystVale_Chest_64"]         = (parts[114] & 0x08) != 0  
+
                             game_data["ClimateControl_Cleared"]    = (parts[21] & 0x04) != 0
+                            game_data["ClimateControl_Chest_65"]   = (parts[114] & 0x04) != 0  
+                            game_data["ClimateControl_Chest_66"]   = (parts[114] & 0x02) != 0  
+                            game_data["ClimateControl_Chest_67"]   = (parts[114] & 0x01) != 0  
+                            game_data["ClimateControl_Chest_68"]   = (parts[115] & 0x80) != 0  
+                            game_data["ClimateControl_Chest_69"]   = (parts[115] & 0x40) != 0  
+                            game_data["ClimateControl_Chest_6A"]   = (parts[115] & 0x20) != 0 
+
                             game_data["Reshel_Cleared"]            = (parts[18] & 0x10) != 0
                             game_data["GaruberkTower_Cleared"]     = (parts[21] & 0x40) != 0
+                            game_data["GaruberkTower_Chest_10"]    = (parts[104] & 0x80) != 0  
+                            game_data["GaruberkTower_Chest_11"]    = (parts[104] & 0x40) != 0  
+                            game_data["GaruberkTower_Chest_12"]    = (parts[104] & 0x20) != 0  
+                            game_data["GaruberkTower_Chest_13"]    = (parts[104] & 0x10) != 0  
+                            game_data["GaruberkTower_Chest_14"]    = (parts[104] & 0x08) != 0  
+                            game_data["GaruberkTower_Chest_15"]    = (parts[104] & 0x04) != 0  
+                            game_data["GaruberkTower_Chest_16"]    = (parts[104] & 0x02) != 0  
+                            game_data["GaruberkTower_Chest_17"]    = (parts[104] & 0x01) != 0  
+
                             game_data["EsperMansion_Cleared"]      = (parts[28] & 0x40) != 0
+                            game_data["EsperMansion_Chest_6C"]     = (parts[115] & 0x08) != 0  
+                            game_data["EsperMansion_Chest_6D"]     = (parts[115] & 0x04) != 0  
+                            game_data["EsperMansion_Chest_6E"]     = (parts[115] & 0x02) != 0  
+                            game_data["EsperMansion_Chest_6F"]     = (parts[115] & 0x01) != 0
+
                             game_data["TowerofAnger_Cleared"]      = (parts[29] & 0x40) != 0
+                            game_data["TowerOfAnger_Chest_9F"]     = (parts[121] & 0x01) != 0  
+                            game_data["TowerOfAnger_Chest_A0"]     = (parts[122] & 0x80) != 0  
+
                             game_data["PlateSystem_Cleared"]       = (parts[13] & 0x40) != 0
+                            game_data["PlateSystem_Chest_3F"]      = (parts[109] & 0x01) != 0  
+                            game_data["PlateSystem_Chest_40"]      = (parts[110] & 0x80) != 0  
+                            game_data["PlateSystem_Chest_41"]      = (parts[110] & 0x40) != 0  
+                            game_data["PlateSystem_Chest_42"]      = (parts[110] & 0x20) != 0  
+                            game_data["PlateSystem_Chest_43"]      = (parts[110] & 0x10) != 0  
+                            game_data["PlateSystem_Chest_44"]      = (parts[110] & 0x08) != 0  
+                            game_data["PlateSystem_Chest_45"]      = (parts[110] & 0x04) != 0  
+                            game_data["PlateSystem_Chest_46"]      = (parts[110] & 0x02) != 0  
+
                             game_data["AirCastle_Cleared"]         = (parts[20] & 0x20) != 0
+                            game_data["AirCastle_Chest_79"]        = (parts[117] & 0x40) != 0  
+                            game_data["AirCastle_Chest_7A"]        = (parts[117] & 0x20) != 0  
+                            game_data["AirCastle_Chest_7B"]        = (parts[117] & 0x10) != 0  
+                            game_data["AirCastle_Chest_7C"]        = (parts[117] & 0x08) != 0  
+                            game_data["AirCastle_Chest_7D"]        = (parts[117] & 0x04) != 0  
+                            game_data["AirCastle_Chest_7E"]        = (parts[117] & 0x02) != 0  
+                            game_data["AirCastle_Chest_7F"]        = (parts[117] & 0x01) != 0  
+                            game_data["AirCastle_Chest_80"]        = (parts[118] & 0x80) != 0  
+                            game_data["AirCastle_Chest_81"]        = (parts[118] & 0x40) != 0  
+                            game_data["AirCastle_Chest_82"]        = (parts[118] & 0x20) != 0  
+
                             game_data["AirCastleBasement_Cleared"] = (parts[21] & 0x02) != 0
+                            game_data["AirCastle_Chest_84"]        = (parts[118] & 0x08) != 0  
+                            game_data["AirCastle_Chest_85"]        = (parts[118] & 0x04) != 0  
+                            game_data["AirCastle_Chest_0C"]        = (parts[103] & 0x08) != 0  
+
                             game_data["BioPlant_Cleared"]          = (parts[8]  & 0x80) != 0
+                            game_data["BioPlant_Chest_26"]         = (parts[106] & 0x02) != 0  
+                            game_data["BioPlant_Chest_29"]         = (parts[107] & 0x40) != 0 
+                            game_data["BioPlant_Chest_2B"]         = (parts[107] & 0x10) != 0  
+                            game_data["BioPlant_Chest_2C"]         = (parts[107] & 0x08) != 0  
+
                             game_data["VahalFort_Cleared"]         = (parts[23] & 0x02) != 0
+                            game_data["VahalFort_Chest_8C"]        = (parts[119] & 0x08) != 0  
+                            game_data["VahalFort_Chest_8D"]        = (parts[119] & 0x04) != 0  
+                            game_data["VahalFort_Chest_8E"]        = (parts[119] & 0x02) != 0  
+                            game_data["VahalFort_Chest_8F"]        = (parts[119] & 0x01) != 0  
+                            game_data["VahalFort_Chest_90"]        = (parts[120] & 0x80) != 0 
+
                             game_data["Hanger_Cleared"]            = (parts[17] & 0x20) != 0
+                            game_data["Hangar_Chest_59"]           = (parts[113] & 0x40) != 0 
+                            game_data["Hangar_Chest_5A"]           = (parts[113] & 0x20) != 0  
+
                             game_data["Kuran_Cleared"]             = (parts[18] & 0x40) != 0
+                            game_data["Kuran_Chest_5C"]            = (parts[113] & 0x08) != 0  
+                            game_data["Kuran_Chest_5E"]            = (parts[113] & 0x02) != 0  
+                            game_data["Kuran_Chest_5F"]            = (parts[113] & 0x01) != 0  
+                            game_data["Kuran_Chest_60"]            = (parts[114] & 0x80) != 0  
+                            game_data["Kuran_Chest_61"]            = (parts[114] & 0x40) != 0  
+                            game_data["Kuran_Chest_62"]            = (parts[114] & 0x20) != 0  
+
                             game_data["Nurvus_Cleared"]            = (parts[14] & 0x80) != 0
+                            game_data["Nurvus_Chest_4D"]           = (parts[111] & 0x04) != 0  
+                            game_data["Nurvus_Chest_4E"]           = (parts[111] & 0x02) != 0  
+                            game_data["Nurvus_Chest_4F"]           = (parts[111] & 0x01) != 0  
+                            game_data["Nurvus_Chest_51"]           = (parts[112] & 0x40) != 0  
+                            game_data["Nurvus_Chest_52"]           = (parts[112] & 0x20) != 0  
 
                             # Chests
                             game_data["Aiedo_Cleared"]             = (parts[108] & 0x10) != 0
+                            game_data["Aiedo_Chest_32"]            = (parts[108] & 0x20) != 0  
+
                             game_data["Silence_Cleared"]           = (parts[120] & 0x20) != 0
+                            game_data["SilenceTower_Chest_91"]     = (parts[120] & 0x40) != 0  
+                            game_data["SilenceTower_Chest_93"]     = (parts[120] & 0x10) != 0  
+                            game_data["SilenceTower_Chest_94"]     = (parts[120] & 0x08) != 0  
+
                             game_data["Passageway_Cleared"]        = (parts[108] & 0x02) != 0
+                            game_data["Passageway_Chest_35"]       = (parts[108] & 0x04) != 0 
+
                             game_data["Kadary_Cleared"]            = (parts[108] & 0x01) != 0
                             game_data["ValleyMaze_Cleared"]        = (parts[105] & 0x02) != 0
+                            game_data["ValleyMaze_Chest_1D"]       = (parts[105] & 0x04) != 0 
+
                             game_data["Tonoe_Cleared"]             = (parts[103] & 0x80) != 0
+                            game_data["Tonoe_Chest_1F"]            = (parts[105] & 0x01) != 0  
+                            game_data["Tonoe_Chest_20"]            = (parts[106] & 0x80) != 0  
+                            game_data["Tonoe_Chest_21"]            = (parts[106] & 0x40) != 0  
+                            game_data["Tonoe_Chest_22"]            = (parts[106] & 0x20) != 0  
+                            game_data["Tonoe_Chest_23"]            = (parts[106] & 0x10) != 0  
+                            game_data["Tonoe_Chest_24"]            = (parts[106] & 0x08) != 0
+                            game_data["Tonoe_Chest_A6"]            = (parts[122] & 0x02) != 0    
+
                             game_data["LadeaTower_Cleared"]        = (parts[103] & 0x40) != 0
+                            game_data["LadeaTower_Chest_47"]       = (parts[110] & 0x01) != 0  
+                            game_data["LadeaTower_Chest_48"]       = (parts[111] & 0x80) != 0  
+                            game_data["LadeaTower_Chest_49"]       = (parts[111] & 0x40) != 0  
+                            game_data["LadeaTower_Chest_4A"]       = (parts[111] & 0x20) != 0  
+                            game_data["LadeaTower_Chest_4B"]       = (parts[111] & 0x10) != 0  
+                            game_data["LadeaTower_Chest_A8"]       = (parts[123] & 0x80) != 0  
+
                             game_data["GumbiousTemple_Cleared"]    = (parts[116] & 0x10) != 0
+                            game_data["GumbiousTemple_Chest_70"]   = (parts[116] & 0x80) != 0  
+                            game_data["GumbiousTemple_Chest_71"]   = (parts[116] & 0x40) != 0  
+                            game_data["GumbiousTemple_Chest_72"]   = (parts[116] & 0x20) != 0 
+
                             game_data["WeaponPlant_Cleared"]       = (parts[116] & 0x04) != 0
+                            game_data["WeaponPlant_Chest_74"]      = (parts[116] & 0x08) != 0  
+                            game_data["WeaponPlant_Chest_76"]      = (parts[116] & 0x02) != 0  
+                            game_data["WeaponPlant_Chest_77"]      = (parts[116] & 0x01) != 0 
+
                             game_data["Strength_Cleared"]          = (parts[122] & 0x10) != 0
+                            game_data["TowerOfStrength_Chest_95"]  = (parts[120] & 0x04) != 0  
+                            game_data["TowerOfStrength_Chest_96"]  = (parts[120] & 0x02) != 0  
+                            game_data["TowerOfStrength_Chest_97"]  = (parts[120] & 0x01) != 0  
+                            game_data["TowerOfStrength_Chest_98"]  = (parts[121] & 0x80) != 0  
+                            game_data["TowerOfStrength_Chest_99"]  = (parts[121] & 0x40) != 0  
+                            game_data["TowerOfStrength_Chest_A1"]  = (parts[122] & 0x40) != 0  
+                            game_data["TowerOfStrength_Chest_A2"]  = (parts[122] & 0x20) != 0  
+
                             game_data["TowerofCourage_Cleared"]    = (parts[122] & 0x04) != 0
+                            game_data["TowerOfCourage_Chest_9B"]   = (parts[121] & 0x10) != 0  
+                            game_data["TowerOfCourage_Chest_9C"]   = (parts[121] & 0x08) != 0  
+                            game_data["TowerOfCourage_Chest_9D"]   = (parts[121] & 0x04) != 0  
+                            game_data["TowerOfCourage_Chest_9E"]   = (parts[121] & 0x02) != 0
+                            game_data["TowerOfCourage_Chest_A4"]   = (parts[122] & 0x08) != 0  
+                            game_data["TowerOfCourage_Chest_A5"]   = (parts[122] & 0x04) != 0    
+
+
                             game_data["SoldiersIsland_Cleared"]    = (parts[103] & 0x04) != 0
+                            game_data["SoldiersIsland_Chest_86"]   = (parts[118] & 0x02) != 0  
+                            game_data["SoldiersIsland_Chest_87"]   = (parts[118] & 0x01) != 0  
+                            game_data["SoldiersIsland_Chest_88"]   = (parts[119] & 0x80) != 0  
+                            game_data["SoldiersIsland_Chest_89"]   = (parts[119] & 0x40) != 0  
+                            game_data["SoldiersIsland_Chest_8A"]   = (parts[119] & 0x20) != 0  
+
                             game_data["BirthValley_Cleared"]       = (parts[106] & 0x04) != 0
+                            game_data["BirthValley_Chest_1B"]      = (parts[105] & 0x10) != 0  
+                            game_data["BirthValley_Chest_1C"]      = (parts[105] & 0x08) != 0  
 
                             if len(items) >= 19:
                                 game_data["Hydrofoil"]    = (items[1]  == 1)
