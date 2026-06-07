@@ -71,16 +71,17 @@ def perform_reset():
 @app.route('/data', methods=['GET'])
 def get_data():
     global remote_toggle_latch, remote_reset_latch
-    if stable_start_time and (time.time() - stable_start_time) > SETTLE_TIME:
-        # Inject the hotkey states dynamically into the payload response
-        response_data = game_data.copy()
-        response_data["Remote_Toggle"] = remote_toggle_latch
-        response_data["Remote_Reset"] = remote_reset_latch
-        
-        # Reset the latches immediately so the signal acts as a single "button click"
-        remote_toggle_latch = False
-        remote_reset_latch = False
-        return jsonify(response_data)
+    
+    # Always return data, even if the game isn't "stable" yet
+    response_data = game_data.copy()
+    response_data["Remote_Toggle"] = remote_toggle_latch
+    response_data["Remote_Reset"] = remote_reset_latch
+    
+    # Clear latches after sending
+    remote_toggle_latch = False
+    remote_reset_latch = False
+    
+    return jsonify(response_data)
     return jsonify({})
 
 @app.route('/remote-toggle', methods=['GET', 'POST'])
