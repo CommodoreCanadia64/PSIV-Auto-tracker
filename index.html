@@ -244,6 +244,50 @@ body {
     overflow: hidden;
 }
 
+.item { 
+    width: 68px; 
+    height: 72px; 
+    cursor: pointer; 
+    filter: grayscale(1) brightness(0.4); 
+    transition: all 0.2s ease;
+    image-rendering: pixelated; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+    justify-content: flex-start;
+    border: 1px solid #333;
+    border-radius: 4px;
+    box-sizing: border-box;
+    padding-top: 2px;
+    position: relative;
+}
+
+.item img { 
+    width: 44px; 
+    height: 44px; 
+    object-fit: contain; 
+}
+
+.item-name {
+    font-size: 10px;
+    color: #aaa;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    padding: 0 2px;
+    line-height: 1;
+    margin-top: 2px;
+    font-family: 'Segoe UI', sans-serif;
+    pointer-events: none;
+}
+
+.item.active .item-name {
+    color: var(--accent);
+    text-shadow: 0 0 3px rgba(0, 229, 255, 0.4);
+}
+
 .tab-bar { 
     display: flex; 
     justify-content: center; 
@@ -290,7 +334,6 @@ body {
     position: relative;
 }
 
-/* This creates the '????????????' over the input area */
 .obj-container.wonder-masked .obj-input::after {
     content: "????????????";
     color: #fff;
@@ -463,7 +506,7 @@ h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 5px;
 
 .item { 
     width: 68px; 
-    height: 68px; 
+    height: 75px; 
     cursor: pointer; 
     filter: grayscale(1) brightness(0.4); 
     transition: all 0.2s ease;
@@ -520,7 +563,6 @@ h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 5px;
     transform: translateX(5px);
 }
 
-/* Linked objective - golden left border when active */
 .obj-container.linked:not(.done) {
     border-left-color: rgba(255, 200, 0, 0.8) !important;
     box-shadow: 0 0 8px rgba(255, 200, 0, 0.08) !important;
@@ -551,7 +593,7 @@ h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 5px;
     display: none !important;
 }
 
-        #grid-locations { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#grid-locations { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 
 .loc-container {
     background: rgba(255, 255, 255, 0.03) !important;
@@ -579,7 +621,7 @@ h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 5px;
     text-transform: uppercase; 
 }
 
-        .loc-input {
+.loc-input {
     background: #000;
     border: 1px solid #444;
     color: var(--accent); 
@@ -595,7 +637,6 @@ h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 5px;
     text-shadow: none;
 }
 
-        
 .timer-container { display: flex; align-items: center; gap: 10px; background: #111; padding: 4px 12px; border: 1px solid #333; border-radius: 10px; }
 #timer-display { font-size: 18px; color: var(--accent); font-weight: bold; min-width: 90px; text-align: center; }
 .timer-btn { background: #333; color: #fff; border: 1px solid #555; cursor: pointer; font-size: 10px; padding: 2px 8px; border-radius: 4px; }
@@ -603,7 +644,6 @@ h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 5px;
 #maps-container.single-view { grid-template-columns: 1fr; align-content: center; }
 #maps-container.single-view .map-box { width: 800px !important; height: 500px !important; max-width: 95%; margin: 0 auto; }
 
-/* Objectives panel header with seed label */
 .obj-panel-header {
     display: flex;
     align-items: baseline;
@@ -695,32 +735,27 @@ h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 5px;
 
     <script>
 
-let wonderModeActive = false; // Add this with your other global state variables
+let wonderModeActive = false; 
 
 function toggleWonderMode() {
     wonderModeActive = !wonderModeActive;
     const btn = document.getElementById('wonder-mode-btn');
     if (btn) btn.classList.toggle('active-mode', wonderModeActive);
     initObjectives();
-     // Refresh to apply/remove masking
 }
 
 // ============================================================
 // SPOILER FILE PARSING & SEED DATA
 // ============================================================
 
-// Global spoiler data (persisted in localStorage)
 let spoilerData = JSON.parse(localStorage.getItem('ps4_spoiler')) || null;
 
-// Maps objective text (from spoiler file) to location ID and cleared flag
-// Also handles "boss" style objectives via the bosses section
 const OBJECTIVE_LOCATION_MAP = {
-    // Exact spoiler names -> { locId, clearedKey }
     "castle ruler":           { locId: "air_castle",         clearedKey: "AirCastleBasement_Cleared" },
     "castle guard":           { locId: "air_castle",         clearedKey: "AirCastle_Cleared" },
     "anger tower":            { locId: "anger",              clearedKey: "TowerofAnger_Cleared" },
     "bio plant":              { locId: "bio",                clearedKey: "BioPlant_Cleared" },
-    "climate Boss":           { locId: "climate",            clearedKey: "ClimateControl_Cleared" },
+    "climate boss":           { locId: "climate",            clearedKey: "ClimateControl_Cleared" },
     "courage tower":          { locId: "courage",            clearedKey: "TowerofCourage_Cleared" },
     "esper mansion":          { locId: "esper",              clearedKey: "EsperMansion_Cleared" },
     "garuberk tower":         { locId: "garuberk",           clearedKey: "GaruberkTower_Cleared" },
@@ -745,18 +780,13 @@ const OBJECTIVE_LOCATION_MAP = {
     "zios fort":              { locId: "ziofort",            clearedKey: "ZiosFort_Cleared" }
 };
 
-// Also map boss location names from Bosses section -> cleared keys
-// This handles objectives like "Weapon Boss" by cross-referencing the bosses list
-const BOSS_LOCATION_MAP = {
-
-};
-
 function parseSpoilerFile(text) {
     const result = {
         seed: null,
         flagString: null,
-        objectives: [],         // Array of { text, locId, clearedKey } up to 8
-        bosses: {},             // { locationName: bossName }
+        objectives: [],
+        bosses: {},
+        entrances: {}
     };
 
     const lines = text.split('\n');
@@ -766,7 +796,6 @@ function parseSpoilerFile(text) {
         const raw = lines[i];
         const line = raw.trim();
 
-        // Parse header fields
         if (line.startsWith('Seed #:')) {
             result.seed = line.replace('Seed #:', '').trim();
             continue;
@@ -776,72 +805,71 @@ function parseSpoilerFile(text) {
             continue;
         }
 
-        // Section detection
-        if (line === 'Objectives:') { section = 'objectives'; continue; }
-        if (line === 'Treasures:')  { section = 'treasures'; continue; }
-        if (line === 'Bosses:')     { section = 'bosses'; continue; }
-        if (line === 'Party:')      { section = 'party'; continue; }
+        // Section header recognition
+        if (line === 'Objectives:')     { section = 'objectives'; continue; }
+        if (line === 'Treasures:')      { section = 'treasures'; continue; }
+        if (line === 'Bosses:')         { section = 'bosses'; continue; }
+        if (line === 'Party:')          { section = 'party'; continue; }
+        if (line === 'Location Swaps:' || line === 'Entrances:') { 
+            section = 'entrances'; 
+            continue; 
+        }
 
-       
-if (section === 'objectives' && line !== '') {
-    result.objectives.push({
-        text: line,
-        locId: null,
-        clearedKey: null,
-    });
-}
+        // Skip section lines or unknown content
+        if (line.endsWith(':') && !line.includes('-->')) {
+            // Catches any unhandled section headers
+            continue;
+        }
 
-// Parse Bosses section
-else if (section === 'bosses' && line.includes('-->')) {
-    const parts = line.split('-->');
-    if (parts.length === 2) {
-        const locName = parts[0].trim().toLowerCase();
-        const bossName = parts[1].trim();
-        result.bosses[locName] = bossName;
-    }
-}
-
-        // Parse Bosses section: " Location Name --> Boss Name"
-        if (section === 'bosses' && line.includes('-->')) {
+        // Section data parsing
+        if (section === 'objectives' && line !== '') {
+            result.objectives.push({
+                text: line,
+                locId: null,
+                clearedKey: null,
+            });
+        } else if (section === 'bosses' && line.includes('-->')) {
             const parts = line.split('-->');
             if (parts.length === 2) {
                 const locName = parts[0].trim().toLowerCase();
                 const bossName = parts[1].trim();
                 result.bosses[locName] = bossName;
             }
+        } else if (section === 'entrances' && line.includes('-->')) {
+            const parts = line.split('-->');
+            if (parts.length === 2) {
+                const origin = parts[0].trim().toLowerCase();
+                const destination = parts[1].trim().toLowerCase();
+                result.entrances[origin] = destination;
+            }
         }
     }
-    // Resolve objectives after Bosses section has been parsed
-for (const objective of result.objectives) {
-    const mapping = resolveObjectiveMapping(
-        objective.text,
-        result.bosses
-    );
 
-    if (mapping) {
-        objective.locId = mapping.locId;
-        objective.clearedKey = mapping.clearedKey;
+    // Link objective text to location keys and boss clears
+    for (const objective of result.objectives) {
+        const mapping = resolveObjectiveMapping(objective.text, result.bosses, result.entrances);
+        if (mapping) {
+            objective.locId = mapping.locId;
+            objective.clearedKey = mapping.clearedKey;
+        }
     }
-}
 
     return result;
 }
 
-function resolveObjectiveMapping(objName, bosses = null) {
-    const key = objName.toLowerCase().trim();
+function resolveObjectiveMapping(objName, bosses = null, entrances = null) {
+    let key = objName.toLowerCase().trim();
 
-    // Direct objective/location mapping
+    // Direct location match
     if (OBJECTIVE_LOCATION_MAP[key]) {
         return OBJECTIVE_LOCATION_MAP[key];
     }
 
-    // Boss objective mapping
+    // If the objective is a Boss name (e.g., "Weapon Boss"), find where that boss is located
     if (bosses) {
         for (const [locationName, bossName] of Object.entries(bosses)) {
-            if (bossName.toLowerCase().trim() === key) {
-                const locationMapping =
-                    OBJECTIVE_LOCATION_MAP[locationName];
-
+            if (bossName.toLowerCase().trim() === key || locationName === key) {
+                const locationMapping = OBJECTIVE_LOCATION_MAP[locationName];
                 if (locationMapping) {
                     return locationMapping;
                 }
@@ -849,7 +877,7 @@ function resolveObjectiveMapping(objName, bosses = null) {
         }
     }
 
-    // Fuzzy matching fallback
+    // Fallback partial matching
     for (const mapKey of Object.keys(OBJECTIVE_LOCATION_MAP)) {
         if (key.includes(mapKey) || mapKey.includes(key)) {
             return OBJECTIVE_LOCATION_MAP[mapKey];
@@ -868,29 +896,22 @@ function loadSpoilerFile(input) {
         spoilerData = parseSpoilerFile(text);
         localStorage.setItem('ps4_spoiler', JSON.stringify(spoilerData));
 
-        // Pre-populate objectives from spoiler
         populateObjectivesFromSpoiler();
-
-        // Update UI
         updateSeedDisplay();
         initObjectives();
         render();
         save();
 
-        // Update button style
         const btn = document.getElementById('seed-select-btn');
         if (btn) btn.classList.add('seed-loaded');
     };
     reader.readAsText(file);
-    // Reset input so same file can be re-selected
     input.value = '';
 }
 
 function populateObjectivesFromSpoiler() {
     if (!spoilerData || !spoilerData.objectives) return;
 
-    // Reset objState and populate from spoiler objectives
-    // Preserve existing 'active' flags, only update text & link data
     for (let i = 0; i < 8; i++) {
         const key = `obj-${i + 1}`;
         const spoilerObj = spoilerData.objectives[i];
@@ -904,7 +925,6 @@ function populateObjectivesFromSpoiler() {
                 linked: !!(spoilerObj.locId),
             };
         } else {
-            // Pad remaining slots as empty
             if (!objState[key]) {
                 objState[key] = { text: '', active: false, linked: false };
             }
@@ -924,7 +944,6 @@ function updateSeedDisplay() {
         flagEl.textContent = spoilerData.flagString || '—';
         bar.classList.add('visible');
         if (label) label.textContent = `Seed ${spoilerData.seed}`;
-        // Mark seed button as loaded
         const btn = document.getElementById('seed-select-btn');
         if (btn) btn.classList.add('seed-loaded');
     } else {
@@ -935,7 +954,6 @@ function updateSeedDisplay() {
     }
 }
 
-// Check if any linked objectives should be auto-completed based on game state
 function syncLinkedObjectives() {
     let changed = false;
     for (let i = 1; i <= 8; i++) {
@@ -943,7 +961,6 @@ function syncLinkedObjectives() {
         const obj = objState[key];
         if (!obj || !obj.clearedKey) continue;
 
-        // If the linked location cleared flag is true, auto-complete the objective
         const isCleared = state[obj.clearedKey] === true;
         if (isCleared && !obj.active) {
             obj.active = true;
@@ -955,10 +972,6 @@ function syncLinkedObjectives() {
         initObjectives();
     }
 }
-
-// ============================================================
-// EXISTING CODE (unchanged apart from save() calling syncLinkedObjectives)
-// ============================================================
 
 const locationChestRegistry = {
     "piata": ["Piata_Chest_18", "Piata_Chest_19", "Piata_Chest_1A"],
@@ -993,8 +1006,8 @@ const locationChestRegistry = {
     "space": ["Space_Chest_0D", "Space_Chest_A1", "Space_Chest_A2", "Space_Chest_A3", "Space_Chest_A5"]
 };
 
-    function initResizeHandles() {
-        document.querySelectorAll('.panel').forEach(panel => {
+function initResizeHandles() {
+    document.querySelectorAll('.panel').forEach(panel => {
         const handle = document.createElement('div');
         handle.className = 'resize-handle';
         panel.appendChild(handle);
@@ -1010,8 +1023,8 @@ const locationChestRegistry = {
     });
 }
 
-    function applyCustomBg(input) {
-        if (input.files && input.files[0]) {
+function applyCustomBg(input) {
+    if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const dataUrl = e.target.result;
@@ -1031,94 +1044,101 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-    function toggleRetraceMode(btn) {
+function toggleRetraceMode(btn) {
     const isRetrace = document.body.classList.toggle('show-retrace');
     btn.classList.toggle('retrace-active', isRetrace);
     btn.style.color = "";
     save(); 
 }
 
-        let ringHuntActive = false;
-        let state = JSON.parse(localStorage.getItem('ps4_state')) || {};
-        let objState = JSON.parse(localStorage.getItem('ps4_objectives')) || {};
-        let locState = JSON.parse(localStorage.getItem('ps4_locations')) || {};
-        let clearedLocs = JSON.parse(localStorage.getItem('ps4_cleared')) || {};
+let ringHuntActive = false;
+let state = JSON.parse(localStorage.getItem('ps4_state')) || {};
+let objState = JSON.parse(localStorage.getItem('ps4_objectives')) || {};
+let locState = JSON.parse(localStorage.getItem('ps4_locations')) || {};
+let clearedLocs = JSON.parse(localStorage.getItem('ps4_cleared')) || {};
 
-        const mapData = { dezolis: 'maps/dezolis.png', motavia: 'maps/motavia.png', rykros: 'maps/rykros.png', space: 'maps/space.png' };
-        const mapDimensions = { motavia: { w: 800, h: 662 }, dezolis: { w: 800, h: 339 }, rykros: { w: 365, h: 365 }, space: { w: 320, h: 225 } };
+const mapData = { dezolis: 'maps/dezolis.png', motavia: 'maps/motavia.png', rykros: 'maps/rykros.png', space: 'maps/space.png' };
+const mapDimensions = { motavia: { w: 800, h: 662 }, dezolis: { w: 800, h: 339 }, rykros: { w: 365, h: 365 }, space: { w: 320, h: 225 } };
 
-        const itemsData = [
-            { "name": "AeroPrism", "type": "Toggle", "img": "images/aeroprism.png" },
-            { "name": "Alshline", "type": "Toggle", "img": "images/alshline.png" },
-            { "name": "EclipseTorch", "type": "Toggle", "img": "images/torch.png" },
-            { "name": "Elsydeon", "type": "Toggle", "img": "images/elsydeon.png" },
-            { "name": "Hydrofoil", "type": "Toggle", "img": "images/hydrofoil.png" },
-            { "name": "Icedigger", "type": "Toggle", "img": "images/icedigger.png" },
-            { "name": "Sapphire", "type": "Toggle", "img": "images/sapphire.png" },
-            { "name": "Frademantl", "type": "Toggle", "img": "images/frademantl.png" },
-            { "name": "Psychowand", "type": "Toggle", "img": "images/psycowand.png" },
-            { "name": "machinekey", "type": "Toggle", "img": "images/machinekey.png" },
-            { "name": "platekey", "type": "Toggle", "img": "images/platekey.png" },
-            { "name": "vahalkey", "type": "Toggle", "img": "images/vahalkey.png" },
-            { "name": "Algo Ring", "type": "Toggle", "img": "images/aring.png" },
-            { "name": "Mota Ring", "type": "Toggle", "img": "images/mring.png" },
-            { "name": "Dezo Ring", "type": "Toggle", "img": "images/dring.png" },
-            { "name": "Palm Ring", "type": "Toggle", "img": "images/pring.png" },
-            { "name": "Rykr Ring", "type": "Toggle", "img": "images/rring.png" },
-            { "name": "ambereye", "type": "consumable", "img": "images/ambereye.png", "max_quantity": 5 }
-        ];
-
-        const locationsData = [
-    { id: "piata", title: "Piata", x: 150, y: 425, planet: "motavia", totalChests: 3 },
-    { id: "passageway", title: "Passageway", x: 100, y: 194, planet: "motavia", totalChests: 2 },
-    { id: "ziofort", title: "Zio's Fort", x: 155, y: 270, planet: "motavia", totalChests: 6 },
-    { id: "nurvus", title: "Nurvus", x: 185, y: 265, planet: "motavia", req: "Psychowand", totalChests: 5 },
-    { id: "birth", title: "Birth Valley", x: 315, y: 225, planet: "motavia", req: "Alshline", totalChests: 3 },
-    { id: "bio", title: "Bio-Plant", x: 360, y: 220, planet: "motavia", req: "Alshline", totalChests: 4 },
-    { id: "wreckage", title: "Wreckage", x: 238, y: 74, planet: "motavia", totalChests: 5 },
-    { id: "vahal", title: "Vahal Fort", x: 530, y: 90, planet: "motavia", reqs: ["vahalkey", "Hydrofoil"], totalChests: 5 },
-    { id: "valley", title: "ValleyMaze", x: 420, y: 348, planet: "motavia", req: "Sapphire", totalChests: 2 },
-    { id: "aiedo", title: "Aiedo", x: 110, y: 156, planet: "motavia", totalChests: 2 },
-    { id: "soldiers", title: "Soldiers' Island", x: 390, y: 470, planet: "motavia", req: "Hydrofoil", totalChests: 6 },
-    { id: "plate", title: "Plate System", x: 645, y: 226, planet: "motavia", req: "platekey", either: ["Hydrofoil", "Icedigger"], totalChests: 8 },
-    { id: "tonoe", title: "Tonoe", x: 490, y: 246, planet: "motavia", req: "Sapphire", totalChests: 8 },
-    { id: "ladea", title: "Ladea Tower", x: 680, y: 420, planet: "motavia", either: ["Hydrofoil", "Icedigger"], totalChests: 7 },
-    { id: "zelan_space", title: "Zelan", x: 375, y: 555, planet: "motavia", req: "machinekey", totalChests: 6 },
-    { id: "myst", title: "Myst Vale", x: 118, y: 10, planet: "dezolis", req: "Icedigger", totalChests: 2 },
-    { id: "climate", title: "Climate Control", x: 420, y: 38, planet: "dezolis", req: "Icedigger", totalChests: 6 },
-    { id: "garuberk", title: "Garuberk Tower", x: 630, y: 15, planet: "dezolis", reqs: ["EclipseTorch", "Icedigger"], totalChests: 8 },
-    { id: "esper", title: "Esper Mansion", x: 785, y: 150, planet: "dezolis", reqs: ["Frademantl", "Icedigger"], totalChests: 4 },
-    { id: "gumbious", title: "Gumbious Temple", x: 420, y: 185, planet: "dezolis", req: "Icedigger", totalChests: 4 },
-    { id: "weapon", title: "Weapon Plant", x: 278, y: 258, planet: "dezolis", req: "Icedigger", totalChests: 4 },
-    { id: "hanger", title: "Tyler/Hangar", x: 35, y: 190, planet: "dezolis", totalChests: 2 },
-    { id: "strength", title: "Tower of Strength", x: 72, y: 45, planet: "rykros", totalChests: 8 },
-    { id: "silence", title: "Silence Tower", x: 185, y: 180, planet: "rykros", totalChests: 4 },
-    { id: "courage", title: "Tower of Courage", x: 305, y: 315, planet: "rykros", totalChests: 6 },
-    { id: "anger", title: "Tower of Anger", x: 80, y: 320, planet: "rykros", req: "Elsydeon", totalChests: 2 },
-    { id: "zelan_space", title: "Zelan", x: 35, y: 50, planet: "space", req: "machinekey", totalChests: 6 },
-    { id: "kuran", title: "Kuran", x: 160, y: 50, planet: "space", totalChests: 6 },
-    { id: "air_castle", title: "Air Castle", x: 90, y: 135, planet: "space", req: "AeroPrism", totalChests: 10 },
-    { id: "air_castle_basement", title: "Air Castle Basement", x: 90, y: 165, planet: "space", req: "AeroPrism", totalChests: 3 },
-    { id: "rappy", title: "Rappy Cave", x: 720, y: 515, planet: "motavia", req: "Hydrofoil" },
-    { id: "mile", title: "Mile", x: 210, y: 300, planet: "motavia" },
-    { id: "kadary", title: "Kadary", x: 155, y: 220, planet: "motavia" },
-    { id: "molcum", x: 265, y: 480, planet: "motavia", title: "Molcum" },
-    { id: "monsen", title: "Monsen", x: 590, y: 292, planet: "motavia", either: ["Hydrofoil", "Icedigger"] },
-    { id: "reshel", title: "Reshel", x: 420, y: 120, planet: "dezolis", req: "Icedigger" },
-    { id: "edge", title: "The Edge", x: 175, y: 330, planet: "motavia" },
-    { id: "retrace-nalya", title: "Nalya - Retrance", x: 255, y: 100, planet: "motavia", isRetrance: true },
-    { id: "retrace-uzo", title: "Uzo - Retrance", x: 35, y: 580, planet: "motavia", isRetrance: true, req: "Hydrofoil" },
-    { id: "retrace-torinco", title: "Torinco - Retrance", x: 640, y: 545, planet: "motavia", isRetrance: true, req: "Hydrofoil" },
-    { id: "retrace-termi", title: "Termi - Retrance", x: 740, y: 350, planet: "motavia", isRetrance: true, either: ["Hydrofoil", "Icedigger"] },
-    { id: "retrace-krup", title: "Krup - Retrance", x: 355, y: 470, planet: "motavia", isRetrance: true },
-    { id: "retrace-ryuon", title: "Ryuon - Retrance", x: 110, y: 220, planet: "dezolis", isRetrance: true },
-    { id: "retrace-raja", title: "Raja Temple - Retrance", x: 120, y: 250, planet: "dezolis", isRetrance: true },
-    { id: "retrace-zosa", title: "Zosa - Retrance", x: 210, y: 90, planet: "dezolis", isRetrance: true, req: "Icedigger" },
-    { id: "retrace-meese", title: "Meese - Retrance", x: 500, y: 135, planet: "dezolis", isRetrance: true, req: "Icedigger" },
-    { id: "retrace-jut", title: "Jut - Retrance", x: 405, y: 205, planet: "dezolis", isRetrance: true, req: "Icedigger" },
+const itemsData = [
+    { "name": "AeroPrism", "type": "Toggle", "img": "images/aeroprism.png" },
+    { "name": "Alshline", "type": "Toggle", "img": "images/alshline.png" },
+    { "name": "EclipseTorch", "type": "Toggle", "img": "images/torch.png" },
+    { "name": "Elsydeon", "type": "Toggle", "img": "images/elsydeon.png" },
+    { "name": "Hydrofoil", "type": "Toggle", "img": "images/hydrofoil.png" },
+    { "name": "Icedigger", "type": "Toggle", "img": "images/icedigger.png" },
+    { "name": "Sapphire", "type": "Toggle", "img": "images/sapphire.png" },
+    { "name": "Frademantl", "type": "Toggle", "img": "images/frademantl.png" },
+    { "name": "Psychowand", "type": "Toggle", "img": "images/psycowand.png" },
+    { "name": "machinekey", "type": "Toggle", "img": "images/machinekey.png" },
+    { "name": "platekey", "type": "Toggle", "img": "images/platekey.png" },
+    { "name": "vahalkey", "type": "Toggle", "img": "images/vahalkey.png" },
+    { "name": "Algo Ring", "type": "Toggle", "img": "images/aring.png" },
+    { "name": "Mota Ring", "type": "Toggle", "img": "images/mring.png" },
+    { "name": "Dezo Ring", "type": "Toggle", "img": "images/dring.png" },
+    { "name": "Palm Ring", "type": "Toggle", "img": "images/pring.png" },
+    { "name": "Rykr Ring", "type": "Toggle", "img": "images/rring.png" },
+    { "name": "ambereye", "type": "consumable", "img": "images/ambereye.png", "max_quantity": 5 }
 ];
 
-        function checkLogic(loc) {
+const locationsData = [
+    // --- MOTAVIA ---
+    { id: "aiedo", title: "Aiedo", x: 110, y: 156, planet: "motavia", totalChests: 2 },
+    { id: "bio", title: "Bio-Plant", x: 360, y: 220, planet: "motavia", req: "Alshline", totalChests: 4 },
+    { id: "birth", title: "Birth Valley", x: 315, y: 225, planet: "motavia", req: "Alshline", totalChests: 3 },
+    { id: "kadary", title: "Kadary", x: 155, y: 220, planet: "motavia" },
+    { id: "retrace-krup", title: "Krup - Retrance", x: 355, y: 470, planet: "motavia", isRetrance: true },
+    { id: "ladea", title: "Ladea Tower", x: 680, y: 420, planet: "motavia", either: ["Hydrofoil", "Icedigger"], totalChests: 7 },
+    { id: "mile", title: "Mile", x: 210, y: 300, planet: "motavia" },
+    { id: "molcum", title: "Molcum", x: 265, y: 480, planet: "motavia" },
+    { id: "monsen", title: "Monsen", x: 590, y: 292, planet: "motavia", either: ["Hydrofoil", "Icedigger"] },
+    { id: "retrace-nalya", title: "Nalya - Retrance", x: 255, y: 100, planet: "motavia", isRetrance: true },
+    { id: "nurvus", title: "Nurvus", x: 185, y: 265, planet: "motavia", req: "Psychowand", totalChests: 5 },
+    { id: "passageway", title: "Passageway", x: 100, y: 194, planet: "motavia", totalChests: 2 },
+    { id: "piata", title: "Piata", x: 150, y: 425, planet: "motavia", totalChests: 3 },
+    { id: "plate", title: "Plate System", x: 645, y: 226, planet: "motavia", req: "platekey", either: ["Hydrofoil", "Icedigger"], totalChests: 8 },
+    { id: "rappy", title: "Rappy Cave", x: 720, y: 515, planet: "motavia", req: "Hydrofoil" },
+    { id: "soldiers", title: "Soldiers' Island", x: 390, y: 470, planet: "motavia", req: "Hydrofoil", totalChests: 6 },
+    { id: "retrace-termi", title: "Termi - Retrance", x: 740, y: 350, planet: "motavia", isRetrance: true, either: ["Hydrofoil", "Icedigger"] },
+    { id: "edge", title: "The Edge", x: 175, y: 330, planet: "motavia" },
+    { id: "tonoe", title: "Tonoe", x: 490, y: 246, planet: "motavia", req: "Sapphire", totalChests: 8 },
+    { id: "retrace-torinco", title: "Torinco - Retrance", x: 640, y: 545, planet: "motavia", isRetrance: true, req: "Hydrofoil" },
+    { id: "retrace-uzo", title: "Uzo - Retrance", x: 35, y: 580, planet: "motavia", isRetrance: true, req: "Hydrofoil" },
+    { id: "vahal", title: "Vahal Fort", x: 530, y: 90, planet: "motavia", reqs: ["vahalkey", "Hydrofoil"], totalChests: 5 },
+    { id: "valley", title: "ValleyMaze", x: 420, y: 348, planet: "motavia", req: "Sapphire", totalChests: 2 },
+    { id: "wreckage", title: "Wreckage", x: 238, y: 74, planet: "motavia", totalChests: 5 },
+    { id: "zelan_space", title: "Zelan", x: 375, y: 555, planet: "motavia", req: "machinekey", totalChests: 6 },
+    { id: "ziofort", title: "Zio's Fort", x: 155, y: 270, planet: "motavia", totalChests: 6 },
+
+    // --- DEZOLIS ---
+    { id: "climate", title: "Climate Control", x: 420, y: 38, planet: "dezolis", req: "Icedigger", totalChests: 6 },
+    { id: "esper", title: "Esper Mansion", x: 785, y: 150, planet: "dezolis", reqs: ["Frademantl", "Icedigger"], totalChests: 4 },
+    { id: "garuberk", title: "Garuberk Tower", x: 630, y: 15, planet: "dezolis", reqs: ["EclipseTorch", "Icedigger"], totalChests: 8 },
+    { id: "gumbious", title: "Gumbious Temple", x: 420, y: 185, planet: "dezolis", req: "Icedigger", totalChests: 4 },
+    { id: "retrace-jut", title: "Jut - Retrance", x: 405, y: 205, planet: "dezolis", isRetrance: true, req: "Icedigger" },
+    { id: "retrace-meese", title: "Meese - Retrance", x: 500, y: 135, planet: "dezolis", isRetrance: true, req: "Icedigger" },
+    { id: "myst", title: "Myst Vale", x: 118, y: 10, planet: "dezolis", req: "Icedigger", totalChests: 2 },
+    { id: "retrace-raja", title: "Raja Temple - Retrance", x: 120, y: 250, planet: "dezolis", isRetrance: true },
+    { id: "reshel", title: "Reshel", x: 420, y: 120, planet: "dezolis", req: "Icedigger" },
+    { id: "retrace-ryuon", title: "Ryuon - Retrance", x: 110, y: 220, planet: "dezolis", isRetrance: true },
+    { id: "hanger", title: "Tyler/Hangar", x: 35, y: 190, planet: "dezolis", totalChests: 2 },
+    { id: "weapon", title: "Weapon Plant", x: 278, y: 258, planet: "dezolis", req: "Icedigger", totalChests: 4 },
+    { id: "retrace-zosa", title: "Zosa - Retrance", x: 210, y: 90, planet: "dezolis", isRetrance: true, req: "Icedigger" },
+
+    // --- RYKROS ---
+    { id: "silence", title: "Silence Tower", x: 185, y: 180, planet: "rykros", totalChests: 4 },
+    { id: "anger", title: "Tower of Anger", x: 80, y: 320, planet: "rykros", req: "Elsydeon", totalChests: 2 },
+    { id: "courage", title: "Tower of Courage", x: 305, y: 315, planet: "rykros", totalChests: 6 },
+    { id: "strength", title: "Tower of Strength", x: 72, y: 45, planet: "rykros", totalChests: 8 },
+
+    // --- SPACE ---
+    { id: "air_castle", title: "Air Castle", x: 90, y: 135, planet: "space", req: "AeroPrism", totalChests: 10 },
+    { id: "air_castle_basement", title: "Air Castle Basement", x: 90, y: 165, planet: "space", req: "AeroPrism", totalChests: 3 },
+    { id: "kuran", title: "Kuran", x: 160, y: 50, planet: "space", totalChests: 6 },
+    { id: "zelan_space", title: "Zelan", x: 35, y: 50, planet: "space", req: "machinekey", totalChests: 6 }
+];
+
+function checkLogic(loc) {
     if (loc.id === "edge") {
         if (ringHuntActive) {
             const rings = ["Algo Ring", "Mota Ring", "Dezo Ring", "Palm Ring", "Rykr Ring"];
@@ -1140,7 +1160,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return true;
 }
 
-        function render() {
+function render() {
     const itemsCont = document.getElementById('grid-items');
     const locsCont = document.getElementById('grid-locations');
     if (!itemsCont || !locsCont) return;
@@ -1153,9 +1173,16 @@ window.addEventListener('DOMContentLoaded', () => {
         else val = state[item.name] || (item.type === 'Toggle' ? false : 0);
         const isActive = item.type === 'Toggle' ? val === true : val > 0;
         div.className = `item ${isActive ? 'active' : ''}`;
+        
         const img = document.createElement('img');
         img.src = item.img;
         div.appendChild(img);
+
+        const nameLabel = document.createElement('span');
+        nameLabel.className = 'item-name';
+        nameLabel.textContent = item.name;
+        div.appendChild(nameLabel);
+
         if (item.type === 'consumable') {
             const c = document.createElement('span');
             c.className = 'counter';
@@ -1176,18 +1203,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     locsCont.innerHTML = '';
-    locsCont.style.display = "grid";
-    locsCont.style.gridTemplateColumns = "1fr 1fr";
-
-    const planetOrder = { 'motavia': 1, 'dezolis': 2, 'rykros': 3, 'space': 4 };
-    const sortedLocations = [...locationsData].sort((a, b) => {
-        const priorityA = planetOrder[a.planet] || 99;
-        const priorityB = planetOrder[b.planet] || 99;
-        if (priorityA !== priorityB) return priorityA - priorityB;
-        return a.title.localeCompare(b.title);
-    });
-
-    sortedLocations.forEach(loc => {
+    locsCont.style.gridTemplateColumns = '1fr 1fr';
+    locationsData.forEach(loc => {
         const container = document.createElement('div');
         const autoClearMapping = {
             'silence': 'Silence_Cleared', 'aiedo': 'Aiedo_Cleared', 'strength': 'Strength_Cleared', 'hanger': 'Hanger_Cleared',
@@ -1226,133 +1243,132 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 }
 
-        function switchMap(target, btn) {
-            const container = document.getElementById('maps-container');
-            if (!container) return;
-            container.innerHTML = '';
-            target === 'all' ? container.classList.remove('single-view') : container.classList.add('single-view');
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-            const planets = target === 'all' ? ['dezolis', 'motavia', 'rykros', 'space'] : [target];
+function switchMap(target, btn) {
+    const container = document.getElementById('maps-container');
+    if (!container) return;
+    container.innerHTML = '';
+    target === 'all' ? container.classList.remove('single-view') : container.classList.add('single-view');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    const planets = target === 'all' ? ['dezolis', 'motavia', 'rykros', 'space'] : [target];
 
-            planets.forEach(p => {
-                const dim = mapDimensions[p];
-                const box = document.createElement('div');
-                box.className = `map-box loc-${p}`; 
-                box.style.backgroundImage = `url('${mapData[p]}')`;
-                box.style.aspectRatio = `${dim.w} / ${dim.h}`;
-                container.appendChild(box);
-                
-                locationsData.filter(l => l.planet === p).forEach(l => {
-                    const pin = document.createElement('div');
-                    const autoClearMapping = { 
-                        'silence': 'Silence_Cleared', 'aiedo': 'Aiedo_Cleared', 'strength': 'Strength_Cleared', 'hanger': 'Hanger_Cleared',
-                        'kadary': "Kadary_Cleared", 'ziofort': "ZiosFort_Cleared", 'nurvus': "Nurvus_Cleared", 'mile': "Mile_Cleared",
-                        'edge': "TheEdge_Cleared", 'piata': "Piata_Cleared", 'birth': "BirthValley_Cleared", 'bio': "BioPlant_Cleared",
-                        'wreckage': "Wreckage_Cleared", 'vahal': "VahalFort_Cleared", 'molcum': "Molcum_Cleared", 'valley': "ValleyMaze_Cleared",
-                        'tonoe': "Tonoe_Cleared", 'soldiers': "SoldiersIsland_Cleared", 'monsen': "Monsen_Cleared", 'plate': "PlateSystem_Cleared",
-                        'ladea': "LadeaTower_Cleared", 'rappy': "RappyCave_Cleared", 'zelan': "Zelan_Cleared", 'myst': "MystVale_Cleared",
-                        'climate': "ClimateControl_Cleared", 'reshel': "Reshel_Cleared", 'garuberk': "GaruberkTower_Cleared",
-                        'esper': "EsperMansion_Cleared", 'gumbious': "GumbiousTemple_Cleared", 'weapon': "WeaponPlant_Cleared",
-                        'courage': "TowerofCourage_Cleared", 'anger': "TowerofAnger_Cleared", 'kuran': "Kuran_Cleared",
-                        'air_castle': "AirCastle_Cleared", 'passageway': "Passageway_Cleared", 'zelan_space': "Zelan_Cleared",
-                        'air_castle_basement': "AirCastleBasement_Cleared", 'retrace-nalya': 'Nalya_Entered',
-                        'retrace-uzo': 'Uzo_Entered', 'retrace-torinco': 'Torinco_Entered',
-                        'retrace-termi': 'Termi_Entered', 'retrace-krup': 'Krup_Entered',
-                        'retrace-ryuon': 'Ryuon_Entered', 'retrace-raja': 'Raja_Entered',
-                        'retrace-zosa': 'Zosa_Entered', 'retrace-meese': 'Meese_Entered',
-                        'retrace-jut': 'Jut_Entered'
-                    };
-                    const autoKey = autoClearMapping[l.id];
-const isAutoCleared = autoKey ? (state[autoKey] === true) : false;
-const isCleared = clearedLocs[l.id] || isAutoCleared;
-const isAccessible = checkLogic(l);
-const isRetrance = l.isRetrance === true;
+    planets.forEach(p => {
+        const dim = mapDimensions[p];
+        const box = document.createElement('div');
+        box.className = `map-box loc-${p}`; 
+        box.style.backgroundImage = `url('${mapData[p]}')`;
+        box.style.aspectRatio = `${dim.w} / ${dim.h}`;
+        container.appendChild(box);
+        
+        locationsData.filter(l => l.planet === p).forEach(l => {
+            const pin = document.createElement('div');
+            const autoClearMapping = { 
+                'silence': 'Silence_Cleared', 'aiedo': 'Aiedo_Cleared', 'strength': 'Strength_Cleared', 'hanger': 'Hanger_Cleared',
+                'kadary': "Kadary_Cleared", 'ziofort': "ZiosFort_Cleared", 'nurvus': "Nurvus_Cleared", 'mile': "Mile_Cleared",
+                'edge': "TheEdge_Cleared", 'piata': "Piata_Cleared", 'birth': "BirthValley_Cleared", 'bio': "BioPlant_Cleared",
+                'wreckage': "Wreckage_Cleared", 'vahal': "VahalFort_Cleared", 'molcum': "Molcum_Cleared", 'valley': "ValleyMaze_Cleared",
+                'tonoe': "Tonoe_Cleared", 'soldiers': "SoldiersIsland_Cleared", 'monsen': "Monsen_Cleared", 'plate': "PlateSystem_Cleared",
+                'ladea': "LadeaTower_Cleared", 'rappy': "RappyCave_Cleared", 'zelan': "Zelan_Cleared", 'myst': "MystVale_Cleared",
+                'climate': "ClimateControl_Cleared", 'reshel': "Reshel_Cleared", 'garuberk': "GaruberkTower_Cleared",
+                'esper': "EsperMansion_Cleared", 'gumbious': "GumbiousTemple_Cleared", 'weapon': "WeaponPlant_Cleared",
+                'courage': "TowerofCourage_Cleared", 'anger': "TowerofAnger_Cleared", 'kuran': "Kuran_Cleared",
+                'air_castle': "AirCastle_Cleared", 'passageway': "Passageway_Cleared", 'zelan_space': "Zelan_Cleared",
+                'air_castle_basement': "AirCastleBasement_Cleared", 'retrace-nalya': 'Nalya_Entered',
+                'retrace-uzo': 'Uzo_Entered', 'retrace-torinco': 'Torinco_Entered',
+                'retrace-termi': 'Termi_Entered', 'retrace-krup': 'Krup_Entered',
+                'retrace-ryuon': 'Ryuon_Entered', 'retrace-raja': 'Raja_Entered',
+                'retrace-zosa': 'Zosa_Entered', 'retrace-meese': 'Meese_Entered',
+                'retrace-jut': 'Jut_Entered'
+            };
+            const autoKey = autoClearMapping[l.id];
+            const isAutoCleared = autoKey ? (state[autoKey] === true) : false;
+            const isCleared = clearedLocs[l.id] || isAutoCleared;
+            const isAccessible = checkLogic(l);
+            const isRetrance = l.isRetrance === true;
 
-let logicClass = "";
-const hasPrism = state["AeroPrism"] === true;
+            let logicClass = "";
+            const hasPrism = state["AeroPrism"] === true;
 
-if (isCleared) {
-    logicClass = 'cleared';
-} else if (l.id === "air_castle") {
-    logicClass = hasPrism ? 'accessible' : 'orange';
-} else {
-    logicClass = isAccessible ? 'accessible' : 'locked';
+            if (isCleared) {
+                logicClass = 'cleared';
+            } else if (l.id === "air_castle") {
+                logicClass = hasPrism ? 'accessible' : 'orange';
+            } else {
+                logicClass = isAccessible ? 'accessible' : 'locked';
+            }
+
+            const pinSize = target === 'all' ? 'pin-sm' : 'pin-lg';
+            pin.className = `map-pin ${logicClass} ${isRetrance ? 'retrace-only' : ''} ${pinSize}`;
+
+            if (!l.isRetrance && l.totalChests > 0) {
+                const associatedChests = locationChestRegistry[l.id];
+                if (associatedChests) {
+                    let openedCount = 0;
+                    associatedChests.forEach(key => { if (state[key] === true) openedCount++; });
+                    let remaining = l.totalChests - openedCount;
+                    if (remaining <= 0) {
+                        pin.innerText = "✓";
+                        logicClass = 'cleared';
+                    } else {
+                        pin.innerText = remaining;
+                    }
+                } else {
+                    pin.innerText = l.totalChests;
+                }
+            }
+            pin.style.left = `${(l.x / dim.w) * 100}%`; 
+            pin.style.top = `${(l.y / dim.h) * 100}%`;
+
+            let tooltipText = "";
+            const userNote = locState[l.id] || "";
+            const isRetranceModeActive = document.body.classList.contains('show-retrace');
+
+            let reqParts = [];
+            if (l.req) reqParts.push(`Requirements: ${l.req}`);
+            if (l.reqs) reqParts.push(`Requirements: ${l.reqs.join(' + ')}`);
+            if (l.either) reqParts.push(`Requirements: Either: ${l.either.join(' or ')}`);
+            let requirementsString = reqParts.length > 0 ? reqParts.join(' | ') : 'No Requirements';
+
+            let chestInfo = l.totalChests ? `Chests: ${l.totalChests}` : "";
+
+            if (isRetranceModeActive) {
+                tooltipText = `ACTUALLY: ${userNote || "???"}`;
+                if (chestInfo) tooltipText += `\n${chestInfo}`;
+                if (reqParts.length > 0) tooltipText += `\n(${requirementsString})`;
+            } else {
+                tooltipText = requirementsString;
+                if (chestInfo) tooltipText = `${chestInfo}\n${tooltipText}`;
+                if (userNote.trim() !== "") tooltipText += `\nNote: ${userNote}`;
+            }
+
+            if (spoilerData && spoilerData.bosses) {
+                const bossKey = l.title.toLowerCase().replace("'", "");
+                const altKeys = [l.id.replace(/_/g, ' ')];
+                let bossName = spoilerData.bosses[bossKey];
+                if (!bossName) {
+                    for (const ak of altKeys) {
+                        bossName = spoilerData.bosses[ak];
+                        if (bossName) break;
+                    }
+                }
+                if (bossName) tooltipText += `\nBoss: ${bossName}`;
+            }
+
+            pin.title = `${l.title}\n${tooltipText}`;
+
+            pin.onclick = (e) => {
+                e.stopPropagation();
+                if (!isRetrance && !isAccessible && !isCleared) return;
+                clearedLocs[l.id] = !clearedLocs[l.id];
+                localStorage.setItem('ps4_cleared', JSON.stringify(clearedLocs));
+                switchMap(target, btn);
+            };
+            box.appendChild(pin);
+        });
+    });
 }
 
-const pinSize = target === 'all' ? 'pin-sm' : 'pin-lg';
-pin.className = `map-pin ${logicClass} ${isRetrance ? 'retrace-only' : ''} ${pinSize}`;
-
-if (!l.isRetrance && l.totalChests > 0) {
-    const associatedChests = locationChestRegistry[l.id];
-    if (associatedChests) {
-        let openedCount = 0;
-        associatedChests.forEach(key => { if (state[key] === true) openedCount++; });
-        let remaining = l.totalChests - openedCount;
-        if (remaining <= 0) {
-            pin.innerText = "✓";
-            logicClass = 'cleared';
-        } else {
-            pin.innerText = remaining;
-        }
-    } else {
-        pin.innerText = l.totalChests;
-    }
-}
-pin.style.left = `${(l.x / dim.w) * 100}%`; 
-pin.style.top = `${(l.y / dim.h) * 100}%`;
-
-let tooltipText = "";
-const userNote = locState[l.id] || "";
-const isRetranceModeActive = document.body.classList.contains('show-retrace');
-
-let reqParts = [];
-if (l.req) reqParts.push(`Requirements: ${l.req}`);
-if (l.reqs) reqParts.push(`Requirements: ${l.reqs.join(' + ')}`);
-if (l.either) reqParts.push(`Requirements: Either: ${l.either.join(' or ')}`);
-let requirementsString = reqParts.length > 0 ? reqParts.join(' | ') : 'No Requirements';
-
-let chestInfo = l.totalChests ? `Chests: ${l.totalChests}` : "";
-
-if (isRetranceModeActive) {
-    tooltipText = `ACTUALLY: ${userNote || "???"}`;
-    if (chestInfo) tooltipText += `\n${chestInfo}`;
-    if (reqParts.length > 0) tooltipText += `\n(${requirementsString})`;
-} else {
-    tooltipText = requirementsString;
-    if (chestInfo) tooltipText = `${chestInfo}\n${tooltipText}`;
-    if (userNote.trim() !== "") tooltipText += `\nNote: ${userNote}`;
-}
-
-// Show boss name from spoiler if available
-if (spoilerData && spoilerData.bosses) {
-    const bossKey = l.title.toLowerCase().replace("'", "");
-    const altKeys = [l.id.replace(/_/g, ' ')];
-    let bossName = spoilerData.bosses[bossKey];
-    if (!bossName) {
-        for (const ak of altKeys) {
-            bossName = spoilerData.bosses[ak];
-            if (bossName) break;
-        }
-    }
-    if (bossName) tooltipText += `\nBoss: ${bossName}`;
-}
-
-pin.title = `${l.title}\n${tooltipText}`;
-
-                    pin.onclick = (e) => {
-                        e.stopPropagation();
-                        if (!isRetrance && !isAccessible && !isCleared) return;
-                        clearedLocs[l.id] = !clearedLocs[l.id];
-                        localStorage.setItem('ps4_cleared', JSON.stringify(clearedLocs));
-                        switchMap(target, btn);
-                    };
-                    box.appendChild(pin);
-                });
-            });
-        }
-
-        async function startAutotracker() {
+async function startAutotracker() {
     const led = document.getElementById('status-led');
     const statusText = document.getElementById('status-text');
     
@@ -1387,30 +1403,29 @@ pin.title = `${l.title}\n${tooltipText}`;
     }, 500);
 }
 
-        function save() { 
-            localStorage.setItem('ps4_state', JSON.stringify(state)); 
+function save() { 
+    localStorage.setItem('ps4_state', JSON.stringify(state)); 
 
-            // Auto-sync linked objectives when game state changes
-            syncLinkedObjectives();
+    syncLinkedObjectives();
 
-            if (ringHuntActive) {
-                const rings = ["Algo Ring", "Mota Ring", "Dezo Ring", "Palm Ring", "Rykr Ring"];
-                rings.forEach((ring, index) => {
-                    if (objState[`obj-${index + 1}`]) objState[`obj-${index + 1}`].active = !!state[ring];
-                });
-                localStorage.setItem('ps4_objectives', JSON.stringify(objState));
-                initObjectives();
-            }
-            render(); 
-            const activeTab = document.querySelector('.tab-btn.active');
-            if (activeTab) {
-                const txt = activeTab.innerText.toLowerCase();
-                const target = txt.includes('all') ? 'all' : (txt.includes('space') ? 'space' : txt);
-                switchMap(target, activeTab); 
-            }
-        }
+    if (ringHuntActive) {
+        const rings = ["Algo Ring", "Mota Ring", "Dezo Ring", "Palm Ring", "Rykr Ring"];
+        rings.forEach((ring, index) => {
+            if (objState[`obj-${index + 1}`]) objState[`obj-${index + 1}`].active = !!state[ring];
+        });
+        localStorage.setItem('ps4_objectives', JSON.stringify(objState));
+        initObjectives();
+    }
+    render(); 
+    const activeTab = document.querySelector('.tab-btn.active');
+    if (activeTab) {
+        const txt = activeTab.innerText.toLowerCase();
+        const target = txt.includes('all') ? 'all' : (txt.includes('space') ? 'space' : txt);
+        switchMap(target, activeTab); 
+    }
+}
 
-        function setRingHuntMode() {
+function setRingHuntMode() {
     ringHuntActive = !ringHuntActive;
     const btn = document.querySelector('.mode-btn');
     if (btn) {
@@ -1430,30 +1445,47 @@ pin.title = `${l.title}\n${tooltipText}`;
     render();
 }
 
-        let startTime, elapsedTime = 0, timerInterval, isRunning = false;
-        function toggleTimer() {
-            if (!isRunning) {
-                startTime = Date.now() - elapsedTime;
-                timerInterval = setInterval(updateTimer, 10);
-                document.getElementById('timer-toggle').innerText = 'STOP';
-                isRunning = true;
-            } else {
-                clearInterval(timerInterval);
-                document.getElementById('timer-toggle').innerText = 'START';
-                isRunning = false;
-            }
-        }
-        function resetTimer() { clearInterval(timerInterval); elapsedTime = 0; isRunning = false; document.getElementById('timer-display').innerText = '00:00:00'; document.getElementById('timer-toggle').innerText = 'START'; }
-        function updateTimer() {
-            elapsedTime = Date.now() - startTime;
-            let h = String(Math.floor(elapsedTime / 3600000)).padStart(2, '0');
-            let m = String(Math.floor((elapsedTime % 3600000) / 60000)).padStart(2, '0');
-            let s = String(Math.floor((elapsedTime % 60000) / 1000)).padStart(2, '0');
-            document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
-        }
-        function handleGlobalKeys(e) { if (e.code === "Space" && e.target.tagName !== 'INPUT') { e.preventDefault(); toggleTimer(); } }
+let startTime, elapsedTime = 0, timerInterval, isRunning = false;
+function toggleTimer() {
+    if (!isRunning) {
+        startTime = Date.now() - elapsedTime;
+        timerInterval = setInterval(updateTimer, 10);
+        document.getElementById('timer-toggle').innerText = 'STOP';
+        isRunning = true;
+    } else {
+        clearInterval(timerInterval);
+        document.getElementById('timer-toggle').innerText = 'START';
+        isRunning = false;
+    }
+}
+function resetTimer() { clearInterval(timerInterval); elapsedTime = 0; isRunning = false; document.getElementById('timer-display').innerText = '00:00:00'; document.getElementById('timer-toggle').innerText = 'START'; }
+function updateTimer() {
+    elapsedTime = Date.now() - startTime;
+    let h = String(Math.floor(elapsedTime / 3600000)).padStart(2, '0');
+    let m = String(Math.floor((elapsedTime % 3600000) / 60000)).padStart(2, '0');
+    let s = String(Math.floor((elapsedTime % 60000) / 1000)).padStart(2, '0');
+    document.getElementById('timer-display').innerText = `${h}:${m}:${s}`;
+}
+function handleGlobalKeys(e) {
+    if (["F23", "F24"].includes(e.code)) {
+        e.preventDefault();
+    }
 
-        function initObjectives() {
+    if (e.code === "F24" && e.target.tagName !== 'INPUT') {
+        toggleTimer();
+    }
+
+    if (e.code === "F23" && e.target.tagName !== 'INPUT') {
+        resetTimer();
+    }
+
+    if (e.code === "Space" && e.target.tagName !== 'INPUT') {
+        e.preventDefault();
+        toggleTimer();
+    }
+}
+
+function initObjectives() {
     const container = document.getElementById('objectives-container');
     if (!container) return;
 
@@ -1467,17 +1499,14 @@ pin.title = `${l.title}\n${tooltipText}`;
         if (!objState[key]) objState[key] = { text: '', active: false };
         const data = objState[key];
 
-        // 1. Determine if this specific objective should be masked
         const isWonderMasked = wonderModeActive && !data.active;
 
         const div = document.createElement('div');
         const isLinked = !!(data.clearedKey);
         
-        // 2. Add the 'wonder-masked' class if applicable
         div.className = `obj-container ${data.active ? 'done' : ''} ${isLinked ? 'linked' : ''} ${isWonderMasked ? 'wonder-masked' : ''}`;
         div.id = `cont-${i}`;
 
-        // Tooltip showing which location this objective is linked to
         if (isLinked && data.locId) {
             div.title = `Auto-tracks: ${data.locId} (${data.clearedKey})`;
         }
@@ -1488,22 +1517,13 @@ pin.title = `${l.title}\n${tooltipText}`;
         input.value = data.text;
         input.placeholder = `Objective ${i}...`;
 
-        // 3. Set readOnly and cursor status based on both Ring Hunt and Wonder Mode
         input.readOnly = isWonderMasked || (ringHuntActive && i <= 5);
         input.style.cursor = input.readOnly ? 'default' : 'text';
-
-        // ... rest of your existing function code ...
-
-        if (ringHuntActive && i <= 5) {
-            input.readOnly = true;
-            input.style.cursor = 'default';
-        }
 
         const handleRightClick = (e) => {
             e.preventDefault();
             e.stopPropagation();
             if (ringHuntActive && i <= 5) return;
-            // Don't allow un-clearing auto-cleared objectives
             if (data.clearedKey && state[data.clearedKey] === true && !data.active) return;
             objState[key].active = !objState[key].active;
             if (objState[key].active) div.classList.add('done');
@@ -1516,8 +1536,6 @@ pin.title = `${l.title}\n${tooltipText}`;
         input.addEventListener('contextmenu', handleRightClick);
         
         input.oninput = () => {
-            // Only update display text — the tracking link (clearedKey/locId) is
-            // locked in when the spoiler is loaded and never changed by typing.
             objState[key].text = input.value;
             saveObjectives();
         };
@@ -1527,7 +1545,7 @@ pin.title = `${l.title}\n${tooltipText}`;
     }
 }
 
-        function toggleObj(idx) {
+function toggleObj(idx) {
     if (ringHuntActive && idx <= 5) return;
     const key = `obj-${idx}`;
     const cont = document.getElementById(`cont-${idx}`);
@@ -1546,7 +1564,6 @@ function saveObjectives() {
         const input = document.getElementById(`obj-${i}`);
         const cont = document.getElementById(`cont-${i}`);
         if (input && cont) {
-            // Preserve locId and clearedKey when saving
             const existing = objState[`obj-${i}`] || {};
             objState[`obj-${i}`] = { 
                 text: input.value, 
@@ -1560,21 +1577,21 @@ function saveObjectives() {
     localStorage.setItem('ps4_objectives', JSON.stringify(objState));
 }
 
-        function saveLocations() {
-            locationsData.forEach(loc => { 
-                const el = document.getElementById(`loc-${loc.id}`); 
-                if (el) locState[loc.id] = el.value; 
-            });
-            localStorage.setItem('ps4_locations', JSON.stringify(locState));
-            const activeTab = document.querySelector('.tab-btn.active');
-            if (activeTab) {
-                const txt = activeTab.innerText.toLowerCase();
-                const target = txt.includes('all') ? 'all' : (txt.includes('space') ? 'space' : txt);
-                switchMap(target, activeTab); 
-            }
-        }
+function saveLocations() {
+    locationsData.forEach(loc => { 
+        const el = document.getElementById(`loc-${loc.id}`); 
+        if (el) locState[loc.id] = el.value; 
+    });
+    localStorage.setItem('ps4_locations', JSON.stringify(locState));
+    const activeTab = document.querySelector('.tab-btn.active');
+    if (activeTab) {
+        const txt = activeTab.innerText.toLowerCase();
+        const target = txt.includes('all') ? 'all' : (txt.includes('space') ? 'space' : txt);
+        switchMap(target, activeTab); 
+    }
+}
 
-        async function resetTracker() {
+async function resetTracker() {
     if (!confirm("Reset tracker and unload the current seed?")) {
         return;
     }
@@ -1584,10 +1601,7 @@ function saveObjectives() {
             method: 'POST'
         });
     } catch (err) {
-        console.error(
-            "Could not reach Python sniffer for reset:",
-            err
-        );
+        console.error("Could not reach Python sniffer for reset:", err);
     }
 
     ringHuntActive = false;
@@ -1616,59 +1630,49 @@ function saveObjectives() {
         ringBtn.classList.remove('active-mode');
     }
 
-    const objCont =
-        document.getElementById('objectives-container');
+    const objCont = document.getElementById('objectives-container');
 
     if (objCont) {
         objCont.classList.remove('ring-hunt-layout');
     }
 
-    const seedBtn =
-        document.getElementById('seed-select-btn');
+    const seedBtn = document.getElementById('seed-select-btn');
 
     if (seedBtn) {
         seedBtn.classList.remove('seed-loaded');
     }
 
-    document
-        .querySelectorAll('.loc-input')
-        .forEach(i => i.value = '');
+    document.querySelectorAll('.loc-input').forEach(i => i.value = '');
 
     updateSeedDisplay();
-
     initObjectives();
     render();
     resetTimer();
 
-    switchMap(
-        'all',
-        document.getElementById('btn-all')
-    );
+    switchMap('all', document.getElementById('btn-all'));
 }
 
-        window.onload = () => {
-            const savedBg = localStorage.getItem('ps4_custom_bg');
-            if (savedBg) {
-                document.documentElement.style.setProperty('--bg-url', `url('${savedBg}')`);
-                document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.6)), url('${savedBg}')`;
-            }
+window.onload = () => {
+    const savedBg = localStorage.getItem('ps4_custom_bg');
+    if (savedBg) {
+        document.documentElement.style.setProperty('--bg-url', `url('${savedBg}')`);
+        document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.6)), url('${savedBg}')`;
+    }
 
-            // Restore spoiler data and seed display
-            if (spoilerData) {
-                updateSeedDisplay();
-                // If objState is empty or doesn't have linked data, re-populate from spoiler
-                const hasLinkedObjs = Object.values(objState).some(o => o && o.clearedKey);
-                if (!hasLinkedObjs && spoilerData.objectives && spoilerData.objectives.length > 0) {
-                    populateObjectivesFromSpoiler();
-                }
-            }
+    if (spoilerData) {
+        updateSeedDisplay();
+        const hasLinkedObjs = Object.values(objState).some(o => o && o.clearedKey);
+        if (!hasLinkedObjs && spoilerData.objectives && spoilerData.objectives.length > 0) {
+            populateObjectivesFromSpoiler();
+        }
+    }
 
-            initResizeHandles();
-            initObjectives(); 
-            render(); 
-            switchMap('all', document.getElementById('btn-all')); 
-            startAutotracker(); 
-        };
+    initResizeHandles();
+    initObjectives(); 
+    render(); 
+    switchMap('all', document.getElementById('btn-all')); 
+    startAutotracker(); 
+};
     </script>
 </body>
 </html>
