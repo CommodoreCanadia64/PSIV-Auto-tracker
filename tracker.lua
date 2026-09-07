@@ -1,10 +1,10 @@
-
 memory.usememorydomain("M68K BUS")
 
 local event_flags_start = 0xFFF100 
 local chest_flags_start = 0xFFF120 
 local world_index_addr   = 0xFFF400 
-local inventory_start    = 0xFFF410 
+local inventory_start    = 0xFFF410
+local map_pointer_addr   = 0xFFECFA
 
 
 local character_equip_slots = {
@@ -62,16 +62,18 @@ while true do
     for i = 0, 31 do c_flags[i+1] = memory.read_u8(chest_flags_start + i) end
 
     local world = memory.read_u8(world_index_addr)
+    local map_pointer = memory.read_u16_be(map_pointer_addr)
 
     local file = io.open(data_filename, "w")
     if file then
-        local out = string.format("%d,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", 
+        local out = string.format("%d,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%04X", 
             world, 
             table.concat(q_flags, ","), 
             table.concat(c_flags, ","),
             res.amber, res.hydro, res.digger, res.sword, res.aero, res.alsh, res.torch, 
             res.wand, res.sapphire, res.plate, res.vahal, res.machine, res.mantle,
-            res.p_ring, res.m_ring, res.d_ring, res.r_ring, res.a_ring, res.mahlay)
+            res.p_ring, res.m_ring, res.d_ring, res.r_ring, res.a_ring, res.mahlay,
+            map_pointer)
         file:write(out)
         file:close()
     end
