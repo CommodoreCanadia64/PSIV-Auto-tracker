@@ -11,20 +11,30 @@ app = Flask(__name__)
 CORS(app)
 
 SETTLE_TIME = 5.0
-STABILITY_THRESHOLD = 2.0  # Seconds the memory must be static before arming
+STABILITY_THRESHOLD = 2.0  # Seconds memory must be static before processing flags
 
-# Global variables
+# Global state trackers
 remote_toggle_latch = False
 remote_reset_latch = False
 stable_start_time = None
 disconnect_start_time = None
 memory_stable_since = None
 last_seen_parts = []
+last_triggered_event = "None"
 
-# Previous tick values
-prev_f160_byte1 = 0
-prev_f160_byte2 = 0
-prev_f161_byte1 = 0
+# Re-entrance Map Pointer Lookups (16-bit hex from 0xFFECFA)
+REENTRANCE_MAP_POINTERS = {
+    "3EF8": "Nalya_Entered",
+    "8624": "Krup_Entered",
+    "60C8": "Termi_Entered",
+    "1548": "Torinco_Entered",
+    "0A60": "Uzo_Entered",
+    "793C": "Ryuon_Entered",
+    "9A5C": "Raja_Entered",
+    "8D9E": "Zosa_Entered",
+    "C88E": "Meese_Entered",
+    "F6F6": "Jut_Entered"
+}
 
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.dirname(sys.executable)
@@ -57,33 +67,43 @@ game_data = {
     "Jut_Entered": False, "AirCastleBasement_Cleared": False
 }
 
+def set_flag(key, new_value):
+    """Updates game_data and records the name of the last triggered event."""
+    global game_data, last_triggered_event
+    old_value = game_data.get(key)
+    
+    if old_value != new_value:
+        game_data[key] = new_value
+        if new_value:
+            last_triggered_event = f"{key}: {new_value}"
+
 def perform_reset():
     global game_data, stable_start_time, disconnect_start_time, memory_stable_since
     stable_start_time = None
     disconnect_start_time = None
     memory_stable_since = None
-    
+
     for key in game_data:
-        if isinstance(game_data[key], bool): game_data[key] = False
-        elif isinstance(game_data[key], int): game_data[key] = 0
+        if isinstance(game_data[key], bool): 
+            game_data[key] = False
+        elif isinstance(game_data[key], int): 
+            game_data[key] = 0
     print("\n[ RESET ] Sniffer wiped. Waiting for stability...")
 
 @app.route('/data', methods=['GET'])
 def get_data():
     global remote_toggle_latch, remote_reset_latch
-    
-    # Always return data, even if the game isn't "stable" yet
+
     response_data = game_data.copy()
     response_data["Remote_Toggle"] = remote_toggle_latch
     response_data["Remote_Reset"] = remote_reset_latch
-    
-    # Clear latches after sending
+
     remote_toggle_latch = False
     remote_reset_latch = False
-    
-    return jsonify(response_data)
-    return jsonify({})
 
+    return jsonify(response_data)
+
+@app.route('/toggle', methods=['GET', 'POST'])
 @app.route('/remote-toggle', methods=['GET', 'POST'])
 def remote_toggle():
     global remote_toggle_latch
@@ -91,7 +111,10 @@ def remote_toggle():
     print("\n[ HOTKEY ] Global Timer Start/Stop received.")
     return jsonify({"status": "success"}), 200
 
+@app.route('/reset', methods=['GET', 'POST'])
 @app.route('/remote-reset', methods=['GET', 'POST'])
+@app.route('/remote_reset', methods=['GET', 'POST'])
+@app.route('/reset_timer', methods=['GET', 'POST'])
 def remote_reset():
     global remote_reset_latch
     remote_reset_latch = True
@@ -101,7 +124,7 @@ def remote_reset():
 def watch_file():
     global game_data, stable_start_time, disconnect_start_time
     global memory_stable_since, last_seen_parts
-    
+
     print(f"Monitoring {DATA_FILE}...")
 
     while True:
@@ -117,262 +140,252 @@ def watch_file():
                     disconnect_start_time = None
                     if stable_start_time is None:
                         stable_start_time = time.time()
-                    
+
+                    raw_tokens = content.split(",")
+
+                    # Extract map hex string (4 characters, uppercase) appended at end of data.txt
+                    map_pointer_hex = raw_tokens[-1].strip().upper() if raw_tokens else ""
+
                     try:
-                        parts = [int(x) for x in content.split(",")]
-                    except:
+                        # Convert all integer components prior to the final map hex string
+                        parts = [int(x) for x in raw_tokens[:-1]]
+                    except ValueError:
                         time.sleep(0.2)
                         continue
 
-                    # --- STABILITY GUARD ---
-                    # If memory is changing (scrambling), reset the stability timer
+                    # Memory stability monitor (prevents flickering during seed setup)
                     if parts != last_seen_parts:
                         memory_stable_since = time.time()
                         last_seen_parts = parts
-                    
+
                     stable_duration = time.time() - memory_stable_since if memory_stable_since else 0
 
                     if len(parts) >= 134:
-                        f160_byte1 = parts[97]
-                        f160_byte2 = parts[98]
-                        f161_byte1 = parts[99]
                         items = parts[134:]
 
-                        # Only process Town/Raja flags if memory has been stable for X seconds
-                        # This ignores the random flicker during seed generation
                         if stable_duration > STABILITY_THRESHOLD:
+                            # --- 1. RE-ENTRANCE LOCATION TRACKING (0xECFA Hex Pointer) ---
+                            if map_pointer_hex in REENTRANCE_MAP_POINTERS:
+                                target_flag = REENTRANCE_MAP_POINTERS[map_pointer_hex]
+                                set_flag(target_flag, True)
 
-                            # Standard Town Entries (Level Triggered)
-                            game_data["Nalya_Entered"]   |= (f160_byte1 & 0x02) != 0
-                            game_data["Krup_Entered"]    |= (f160_byte1 & 0x08) != 0
-                            game_data["Termi_Entered"]   |= (f160_byte2 & 0x20) != 0
-                            game_data["Torinco_Entered"] |= (f160_byte2 & 0x08) != 0
-                            game_data["Uzo_Entered"]     |= (f160_byte2 & 0x10) != 0
-                            game_data["Ryuon_Entered"]   |= (f161_byte1 & 0x40) != 0
-                            game_data["Zosa_Entered"]    |= (f161_byte1 & 0x10) != 0
-                            game_data["Meese_Entered"]   |= (f161_byte1 & 0x04) != 0
-                            game_data["Jut_Entered"]     |= (f161_byte1 & 0x01) != 0
+                            # --- 2. EVENT FLAGS ---
+                            set_flag("Wreckage_Cleared", (parts[9] & 0x80) != 0)
+                            set_flag("Wreckage_Chest_2D", (parts[107] & 0x04) != 0)  
+                            set_flag("Wreckage_Chest_2E", (parts[107] & 0x02) != 0)  
+                            set_flag("Wreckage_Chest_2F", (parts[107] & 0x01) != 0)  
+                            set_flag("Wreckage_Chest_30", (parts[108] & 0x80) != 0)  
+                            set_flag("Wreckage_Chest_31", (parts[108] & 0x40) != 0)  
 
-                            if (f161_byte1 & 0x80) != 0:
-                                game_data["Raja_Entered"] = True
+                            set_flag("ZiosFort_Cleared", (parts[9] & 0x20) != 0)
+                            set_flag("ZioFort_Chest_39", (parts[109] & 0x40) != 0)  
+                            set_flag("ZioFort_Chest_3A", (parts[109] & 0x20) != 0)  
+                            set_flag("ZioFort_Chest_3B", (parts[109] & 0x10) != 0)  
+                            set_flag("ZioFort_Chest_3C", (parts[109] & 0x08) != 0)  
+                            set_flag("ZioFort_Chest_3D", (parts[109] & 0x04) != 0)  
+                            set_flag("ZioFort_Chest_3E", (parts[109] & 0x02) != 0)  
 
-                            # --- EVENT FLAGS ---
-                            game_data["Wreckage_Cleared"]          = (parts[9]  & 0x80) != 0
-                            game_data["Wreckage_Chest_2D"]         = (parts[107] & 0x04) != 0  
-                            game_data["Wreckage_Chest_2E"]         = (parts[107] & 0x02) != 0  
-                            game_data["Wreckage_Chest_2F"]         = (parts[107] & 0x01) != 0  
-                            game_data["Wreckage_Chest_30"]         = (parts[108] & 0x80) != 0  
-                            game_data["Wreckage_Chest_31"]         = (parts[108] & 0x40) != 0  
+                            set_flag("Mile_Cleared", (parts[4] & 0x08) != 0)
+                            set_flag("Piata_Cleared", (parts[2] & 0x01) != 0)
+                            set_flag("Piata_Chest_18", (parts[105] & 0x80) != 0)  
+                            set_flag("Piata_Chest_19", (parts[105] & 0x40) != 0)  
+                            set_flag("Piata_Chest_1A", (parts[105] & 0x20) != 0) 
 
-                            game_data["ZiosFort_Cleared"]          = (parts[9]  & 0x20) != 0
-                            game_data["ZioFort_Chest_39"]          = (parts[109] & 0x40) != 0  
-                            game_data["ZioFort_Chest_3A"]          = (parts[109] & 0x20) != 0  
-                            game_data["ZioFort_Chest_3B"]          = (parts[109] & 0x10) != 0  
-                            game_data["ZioFort_Chest_3C"]          = (parts[109] & 0x08) != 0  
-                            game_data["ZioFort_Chest_3D"]          = (parts[109] & 0x04) != 0  
-                            game_data["ZioFort_Chest_3E"]          = (parts[109] & 0x02) != 0  
+                            set_flag("Molcum_Cleared", (parts[3] & 0x40) != 0)
+                            set_flag("Monsen_Cleared", (parts[8] & 0x02) != 0)
+                            set_flag("RappyCave_Cleared", (parts[24] & 0x20) != 0)
+                            set_flag("Zelan_Cleared", (parts[15] & 0x80) != 0)
+                            set_flag("Zelan_Chest_0B", (parts[103] & 0x10) != 0)
+                            set_flag("Zelan_Chest_53", (parts[112] & 0x10) != 0)  
+                            set_flag("Zelan_Chest_54", (parts[112] & 0x08) != 0)  
+                            set_flag("Zelan_Chest_55", (parts[112] & 0x04) != 0)  
+                            set_flag("Zelan_Chest_56", (parts[112] & 0x02) != 0)  
+                            set_flag("Zelan_Chest_57", (parts[112] & 0x01) != 0)  
 
-                            game_data["Mile_Cleared"]              = (parts[4]  & 0x08) != 0
-                            game_data["Piata_Cleared"]             = (parts[2]  & 0x01) != 0
-                            game_data["Piata_Chest_18"]            = (parts[105] & 0x80) != 0  
-                            game_data["Piata_Chest_19"]            = (parts[105] & 0x40) != 0  
-                            game_data["Piata_Chest_1A"]            = (parts[105] & 0x20) != 0 
+                            set_flag("MystVale_Cleared", (parts[19] & 0x40) != 0)
+                            set_flag("MystVale_Chest_63", (parts[114] & 0x10) != 0)  
+                            set_flag("MystVale_Chest_64", (parts[114] & 0x08) != 0)  
 
-                            game_data["Molcum_Cleared"]            = (parts[3]  & 0x40) != 0
-                            game_data["Monsen_Cleared"]            = (parts[8]  & 0x02) != 0
-                            game_data["RappyCave_Cleared"]         = (parts[24] & 0x20) != 0
-                            game_data["Zelan_Cleared"]             = (parts[15] & 0x80) != 0
-                            game_data["Zelan_Chest_0B"]            = (parts[103] & 0x10) != 0
-                            game_data["Zelan_Chest_53"]            = (parts[112] & 0x10) != 0  
-                            game_data["Zelan_Chest_54"]            = (parts[112] & 0x08) != 0  
-                            game_data["Zelan_Chest_55"]            = (parts[112] & 0x04) != 0  
-                            game_data["Zelan_Chest_56"]            = (parts[112] & 0x02) != 0  
-                            game_data["Zelan_Chest_57"]            = (parts[112] & 0x01) != 0  
+                            set_flag("ClimateControl_Cleared", (parts[21] & 0x04) != 0)
+                            set_flag("ClimateControl_Chest_65", (parts[114] & 0x04) != 0)  
+                            set_flag("ClimateControl_Chest_66", (parts[114] & 0x02) != 0)  
+                            set_flag("ClimateControl_Chest_67", (parts[114] & 0x01) != 0)  
+                            set_flag("ClimateControl_Chest_68", (parts[115] & 0x80) != 0)  
+                            set_flag("ClimateControl_Chest_69", (parts[115] & 0x40) != 0)  
+                            set_flag("ClimateControl_Chest_6A", (parts[115] & 0x20) != 0) 
 
-                            game_data["MystVale_Cleared"]          = (parts[19] & 0x40) != 0
-                            game_data["MystVale_Chest_63"]         = (parts[114] & 0x10) != 0  
-                            game_data["MystVale_Chest_64"]         = (parts[114] & 0x08) != 0  
+                            set_flag("Reshel_Cleared", (parts[18] & 0x10) != 0)
+                            set_flag("GaruberkTower_Cleared", (parts[21] & 0x40) != 0)
+                            set_flag("GaruberkTower_Chest_10", (parts[104] & 0x80) != 0)  
+                            set_flag("GaruberkTower_Chest_11", (parts[104] & 0x40) != 0)  
+                            set_flag("GaruberkTower_Chest_12", (parts[104] & 0x20) != 0)  
+                            set_flag("GaruberkTower_Chest_13", (parts[104] & 0x10) != 0)  
+                            set_flag("GaruberkTower_Chest_14", (parts[104] & 0x08) != 0)  
+                            set_flag("GaruberkTower_Chest_15", (parts[104] & 0x04) != 0)  
+                            set_flag("GaruberkTower_Chest_16", (parts[104] & 0x02) != 0)  
+                            set_flag("GaruberkTower_Chest_17", (parts[104] & 0x01) != 0)  
 
-                            game_data["ClimateControl_Cleared"]    = (parts[21] & 0x04) != 0
-                            game_data["ClimateControl_Chest_65"]   = (parts[114] & 0x04) != 0  
-                            game_data["ClimateControl_Chest_66"]   = (parts[114] & 0x02) != 0  
-                            game_data["ClimateControl_Chest_67"]   = (parts[114] & 0x01) != 0  
-                            game_data["ClimateControl_Chest_68"]   = (parts[115] & 0x80) != 0  
-                            game_data["ClimateControl_Chest_69"]   = (parts[115] & 0x40) != 0  
-                            game_data["ClimateControl_Chest_6A"]   = (parts[115] & 0x20) != 0 
+                            set_flag("EsperMansion_Cleared", (parts[28] & 0x40) != 0)
+                            set_flag("EsperMansion_Chest_6C", (parts[115] & 0x08) != 0)  
+                            set_flag("EsperMansion_Chest_6D", (parts[115] & 0x04) != 0)  
+                            set_flag("EsperMansion_Chest_6E", (parts[115] & 0x02) != 0)  
+                            set_flag("EsperMansion_Chest_6F", (parts[115] & 0x01) != 0)
 
-                            game_data["Reshel_Cleared"]            = (parts[18] & 0x10) != 0
-                            game_data["GaruberkTower_Cleared"]     = (parts[21] & 0x40) != 0
-                            game_data["GaruberkTower_Chest_10"]    = (parts[104] & 0x80) != 0  
-                            game_data["GaruberkTower_Chest_11"]    = (parts[104] & 0x40) != 0  
-                            game_data["GaruberkTower_Chest_12"]    = (parts[104] & 0x20) != 0  
-                            game_data["GaruberkTower_Chest_13"]    = (parts[104] & 0x10) != 0  
-                            game_data["GaruberkTower_Chest_14"]    = (parts[104] & 0x08) != 0  
-                            game_data["GaruberkTower_Chest_15"]    = (parts[104] & 0x04) != 0  
-                            game_data["GaruberkTower_Chest_16"]    = (parts[104] & 0x02) != 0  
-                            game_data["GaruberkTower_Chest_17"]    = (parts[104] & 0x01) != 0  
+                            set_flag("TowerofAnger_Cleared", (parts[29] & 0x40) != 0)
+                            set_flag("TowerOfAnger_Chest_9F", (parts[121] & 0x01) != 0)  
+                            set_flag("TowerOfAnger_Chest_A0", (parts[122] & 0x80) != 0)  
 
-                            game_data["EsperMansion_Cleared"]      = (parts[28] & 0x40) != 0
-                            game_data["EsperMansion_Chest_6C"]     = (parts[115] & 0x08) != 0  
-                            game_data["EsperMansion_Chest_6D"]     = (parts[115] & 0x04) != 0  
-                            game_data["EsperMansion_Chest_6E"]     = (parts[115] & 0x02) != 0  
-                            game_data["EsperMansion_Chest_6F"]     = (parts[115] & 0x01) != 0
+                            set_flag("PlateSystem_Cleared", (parts[13] & 0x40) != 0)
+                            set_flag("PlateSystem_Chest_3F", (parts[109] & 0x01) != 0)  
+                            set_flag("PlateSystem_Chest_40", (parts[110] & 0x80) != 0)  
+                            set_flag("PlateSystem_Chest_41", (parts[110] & 0x40) != 0)  
+                            set_flag("PlateSystem_Chest_42", (parts[110] & 0x20) != 0)  
+                            set_flag("PlateSystem_Chest_43", (parts[110] & 0x10) != 0)  
+                            set_flag("PlateSystem_Chest_44", (parts[110] & 0x08) != 0)  
+                            set_flag("PlateSystem_Chest_45", (parts[110] & 0x04) != 0)  
+                            set_flag("PlateSystem_Chest_46", (parts[110] & 0x02) != 0)  
 
-                            game_data["TowerofAnger_Cleared"]      = (parts[29] & 0x40) != 0
-                            game_data["TowerOfAnger_Chest_9F"]     = (parts[121] & 0x01) != 0  
-                            game_data["TowerOfAnger_Chest_A0"]     = (parts[122] & 0x80) != 0  
+                            set_flag("AirCastle_Cleared", (parts[20] & 0x20) != 0)
+                            set_flag("AirCastle_Chest_79", (parts[117] & 0x40) != 0)  
+                            set_flag("AirCastle_Chest_7A", (parts[117] & 0x20) != 0)  
+                            set_flag("AirCastle_Chest_7B", (parts[117] & 0x10) != 0)  
+                            set_flag("AirCastle_Chest_7C", (parts[117] & 0x08) != 0)  
+                            set_flag("AirCastle_Chest_7D", (parts[117] & 0x04) != 0)  
+                            set_flag("AirCastle_Chest_7E", (parts[117] & 0x02) != 0)  
+                            set_flag("AirCastle_Chest_7F", (parts[117] & 0x01) != 0)  
+                            set_flag("AirCastle_Chest_80", (parts[118] & 0x80) != 0)  
+                            set_flag("AirCastle_Chest_81", (parts[118] & 0x40) != 0)  
+                            set_flag("AirCastle_Chest_82", (parts[118] & 0x20) != 0)  
 
-                            game_data["PlateSystem_Cleared"]       = (parts[13] & 0x40) != 0
-                            game_data["PlateSystem_Chest_3F"]      = (parts[109] & 0x01) != 0  
-                            game_data["PlateSystem_Chest_40"]      = (parts[110] & 0x80) != 0  
-                            game_data["PlateSystem_Chest_41"]      = (parts[110] & 0x40) != 0  
-                            game_data["PlateSystem_Chest_42"]      = (parts[110] & 0x20) != 0  
-                            game_data["PlateSystem_Chest_43"]      = (parts[110] & 0x10) != 0  
-                            game_data["PlateSystem_Chest_44"]      = (parts[110] & 0x08) != 0  
-                            game_data["PlateSystem_Chest_45"]      = (parts[110] & 0x04) != 0  
-                            game_data["PlateSystem_Chest_46"]      = (parts[110] & 0x02) != 0  
+                            set_flag("AirCastleBasement_Cleared", (parts[21] & 0x02) != 0)
+                            set_flag("AirCastle_Chest_84", (parts[118] & 0x08) != 0)  
+                            set_flag("AirCastle_Chest_85", (parts[118] & 0x04) != 0)  
+                            set_flag("AirCastle_Chest_0C", (parts[103] & 0x08) != 0)  
 
-                            game_data["AirCastle_Cleared"]         = (parts[20] & 0x20) != 0
-                            game_data["AirCastle_Chest_79"]        = (parts[117] & 0x40) != 0  
-                            game_data["AirCastle_Chest_7A"]        = (parts[117] & 0x20) != 0  
-                            game_data["AirCastle_Chest_7B"]        = (parts[117] & 0x10) != 0  
-                            game_data["AirCastle_Chest_7C"]        = (parts[117] & 0x08) != 0  
-                            game_data["AirCastle_Chest_7D"]        = (parts[117] & 0x04) != 0  
-                            game_data["AirCastle_Chest_7E"]        = (parts[117] & 0x02) != 0  
-                            game_data["AirCastle_Chest_7F"]        = (parts[117] & 0x01) != 0  
-                            game_data["AirCastle_Chest_80"]        = (parts[118] & 0x80) != 0  
-                            game_data["AirCastle_Chest_81"]        = (parts[118] & 0x40) != 0  
-                            game_data["AirCastle_Chest_82"]        = (parts[118] & 0x20) != 0  
+                            set_flag("BioPlant_Cleared", (parts[8] & 0x80) != 0)
+                            set_flag("BioPlant_Chest_26", (parts[106] & 0x02) != 0)  
+                            set_flag("BioPlant_Chest_29", (parts[107] & 0x40) != 0) 
+                            set_flag("BioPlant_Chest_2B", (parts[107] & 0x10) != 0)  
+                            set_flag("BioPlant_Chest_2C", (parts[107] & 0x08) != 0)  
 
-                            game_data["AirCastleBasement_Cleared"] = (parts[21] & 0x02) != 0
-                            game_data["AirCastle_Chest_84"]        = (parts[118] & 0x08) != 0  
-                            game_data["AirCastle_Chest_85"]        = (parts[118] & 0x04) != 0  
-                            game_data["AirCastle_Chest_0C"]        = (parts[103] & 0x08) != 0  
+                            set_flag("VahalFort_Cleared", (parts[23] & 0x02) != 0)
+                            set_flag("VahalFort_Chest_8C", (parts[119] & 0x08) != 0)  
+                            set_flag("VahalFort_Chest_8D", (parts[119] & 0x04) != 0)  
+                            set_flag("VahalFort_Chest_8E", (parts[119] & 0x02) != 0)  
+                            set_flag("VahalFort_Chest_8F", (parts[119] & 0x01) != 0)  
+                            set_flag("VahalFort_Chest_90", (parts[120] & 0x80) != 0) 
 
-                            game_data["BioPlant_Cleared"]          = (parts[8]  & 0x80) != 0
-                            game_data["BioPlant_Chest_26"]         = (parts[106] & 0x02) != 0  
-                            game_data["BioPlant_Chest_29"]         = (parts[107] & 0x40) != 0 
-                            game_data["BioPlant_Chest_2B"]         = (parts[107] & 0x10) != 0  
-                            game_data["BioPlant_Chest_2C"]         = (parts[107] & 0x08) != 0  
+                            set_flag("Hanger_Cleared", (parts[17] & 0x20) != 0)
+                            set_flag("Hangar_Chest_59", (parts[113] & 0x40) != 0) 
+                            set_flag("Hangar_Chest_5A", (parts[113] & 0x20) != 0)  
 
-                            game_data["VahalFort_Cleared"]         = (parts[23] & 0x02) != 0
-                            game_data["VahalFort_Chest_8C"]        = (parts[119] & 0x08) != 0  
-                            game_data["VahalFort_Chest_8D"]        = (parts[119] & 0x04) != 0  
-                            game_data["VahalFort_Chest_8E"]        = (parts[119] & 0x02) != 0  
-                            game_data["VahalFort_Chest_8F"]        = (parts[119] & 0x01) != 0  
-                            game_data["VahalFort_Chest_90"]        = (parts[120] & 0x80) != 0 
+                            set_flag("Kuran_Cleared", (parts[18] & 0x40) != 0)
+                            set_flag("Kuran_Chest_5C", (parts[113] & 0x08) != 0)  
+                            set_flag("Kuran_Chest_5E", (parts[113] & 0x02) != 0)  
+                            set_flag("Kuran_Chest_5F", (parts[113] & 0x01) != 0)  
+                            set_flag("Kuran_Chest_60", (parts[114] & 0x80) != 0)  
+                            set_flag("Kuran_Chest_61", (parts[114] & 0x40) != 0)  
+                            set_flag("Kuran_Chest_62", (parts[114] & 0x20) != 0)  
 
-                            game_data["Hanger_Cleared"]            = (parts[17] & 0x20) != 0
-                            game_data["Hangar_Chest_59"]           = (parts[113] & 0x40) != 0 
-                            game_data["Hangar_Chest_5A"]           = (parts[113] & 0x20) != 0  
+                            set_flag("Nurvus_Cleared", (parts[14] & 0x80) != 0)
+                            set_flag("Nurvus_Chest_4D", (parts[111] & 0x04) != 0)  
+                            set_flag("Nurvus_Chest_4E", (parts[111] & 0x02) != 0)  
+                            set_flag("Nurvus_Chest_4F", (parts[111] & 0x01) != 0)  
+                            set_flag("Nurvus_Chest_51", (parts[112] & 0x40) != 0)  
+                            set_flag("Nurvus_Chest_52", (parts[112] & 0x20) != 0)  
 
-                            game_data["Kuran_Cleared"]             = (parts[18] & 0x40) != 0
-                            game_data["Kuran_Chest_5C"]            = (parts[113] & 0x08) != 0  
-                            game_data["Kuran_Chest_5E"]            = (parts[113] & 0x02) != 0  
-                            game_data["Kuran_Chest_5F"]            = (parts[113] & 0x01) != 0  
-                            game_data["Kuran_Chest_60"]            = (parts[114] & 0x80) != 0  
-                            game_data["Kuran_Chest_61"]            = (parts[114] & 0x40) != 0  
-                            game_data["Kuran_Chest_62"]            = (parts[114] & 0x20) != 0  
+                            set_flag("Aiedo_Cleared", (parts[108] & 0x10) != 0)
+                            set_flag("Aiedo_Chest_32", (parts[108] & 0x20) != 0)  
 
-                            game_data["Nurvus_Cleared"]            = (parts[14] & 0x80) != 0
-                            game_data["Nurvus_Chest_4D"]           = (parts[111] & 0x04) != 0  
-                            game_data["Nurvus_Chest_4E"]           = (parts[111] & 0x02) != 0  
-                            game_data["Nurvus_Chest_4F"]           = (parts[111] & 0x01) != 0  
-                            game_data["Nurvus_Chest_51"]           = (parts[112] & 0x40) != 0  
-                            game_data["Nurvus_Chest_52"]           = (parts[112] & 0x20) != 0  
+                            set_flag("Silence_Cleared", (parts[120] & 0x20) != 0)
+                            set_flag("SilenceTower_Chest_91", (parts[120] & 0x40) != 0)  
+                            set_flag("SilenceTower_Chest_93", (parts[120] & 0x10) != 0)  
+                            set_flag("SilenceTower_Chest_94", (parts[120] & 0x08) != 0)  
 
-                            # Chests
-                            game_data["Aiedo_Cleared"]             = (parts[108] & 0x10) != 0
-                            game_data["Aiedo_Chest_32"]            = (parts[108] & 0x20) != 0  
+                            set_flag("Passageway_Cleared", (parts[108] & 0x02) != 0)
+                            set_flag("Passageway_Chest_35", (parts[108] & 0x04) != 0) 
 
-                            game_data["Silence_Cleared"]           = (parts[120] & 0x20) != 0
-                            game_data["SilenceTower_Chest_91"]     = (parts[120] & 0x40) != 0  
-                            game_data["SilenceTower_Chest_93"]     = (parts[120] & 0x10) != 0  
-                            game_data["SilenceTower_Chest_94"]     = (parts[120] & 0x08) != 0  
+                            set_flag("Kadary_Cleared", (parts[108] & 0x01) != 0)
+                            set_flag("ValleyMaze_Cleared", (parts[105] & 0x02) != 0)
+                            set_flag("ValleyMaze_Chest_1D", (parts[105] & 0x04) != 0) 
 
-                            game_data["Passageway_Cleared"]        = (parts[108] & 0x02) != 0
-                            game_data["Passageway_Chest_35"]       = (parts[108] & 0x04) != 0 
+                            set_flag("Tonoe_Cleared", (parts[103] & 0x80) != 0)
+                            set_flag("Tonoe_Chest_1F", (parts[105] & 0x01) != 0)  
+                            set_flag("Tonoe_Chest_20", (parts[106] & 0x80) != 0)  
+                            set_flag("Tonoe_Chest_21", (parts[106] & 0x40) != 0)  
+                            set_flag("Tonoe_Chest_22", (parts[106] & 0x20) != 0)  
+                            set_flag("Tonoe_Chest_23", (parts[106] & 0x10) != 0)  
+                            set_flag("Tonoe_Chest_24", (parts[106] & 0x08) != 0)
+                            set_flag("Tonoe_Chest_A6", (parts[122] & 0x02) != 0)    
 
-                            game_data["Kadary_Cleared"]            = (parts[108] & 0x01) != 0
-                            game_data["ValleyMaze_Cleared"]        = (parts[105] & 0x02) != 0
-                            game_data["ValleyMaze_Chest_1D"]       = (parts[105] & 0x04) != 0 
+                            set_flag("LadeaTower_Cleared", (parts[103] & 0x40) != 0)
+                            set_flag("LadeaTower_Chest_47", (parts[110] & 0x01) != 0)  
+                            set_flag("LadeaTower_Chest_48", (parts[111] & 0x80) != 0)  
+                            set_flag("LadeaTower_Chest_49", (parts[111] & 0x40) != 0)  
+                            set_flag("LadeaTower_Chest_4A", (parts[111] & 0x20) != 0)  
+                            set_flag("LadeaTower_Chest_4B", (parts[111] & 0x10) != 0)  
+                            set_flag("LadeaTower_Chest_A8", (parts[123] & 0x80) != 0)  
 
-                            game_data["Tonoe_Cleared"]             = (parts[103] & 0x80) != 0
-                            game_data["Tonoe_Chest_1F"]            = (parts[105] & 0x01) != 0  
-                            game_data["Tonoe_Chest_20"]            = (parts[106] & 0x80) != 0  
-                            game_data["Tonoe_Chest_21"]            = (parts[106] & 0x40) != 0  
-                            game_data["Tonoe_Chest_22"]            = (parts[106] & 0x20) != 0  
-                            game_data["Tonoe_Chest_23"]            = (parts[106] & 0x10) != 0  
-                            game_data["Tonoe_Chest_24"]            = (parts[106] & 0x08) != 0
-                            game_data["Tonoe_Chest_A6"]            = (parts[122] & 0x02) != 0    
+                            set_flag("GumbiousTemple_Cleared", (parts[116] & 0x10) != 0)
+                            set_flag("GumbiousTemple_Chest_70", (parts[116] & 0x80) != 0)  
+                            set_flag("GumbiousTemple_Chest_71", (parts[116] & 0x40) != 0)  
+                            set_flag("GumbiousTemple_Chest_72", (parts[116] & 0x20) != 0) 
 
-                            game_data["LadeaTower_Cleared"]        = (parts[103] & 0x40) != 0
-                            game_data["LadeaTower_Chest_47"]       = (parts[110] & 0x01) != 0  
-                            game_data["LadeaTower_Chest_48"]       = (parts[111] & 0x80) != 0  
-                            game_data["LadeaTower_Chest_49"]       = (parts[111] & 0x40) != 0  
-                            game_data["LadeaTower_Chest_4A"]       = (parts[111] & 0x20) != 0  
-                            game_data["LadeaTower_Chest_4B"]       = (parts[111] & 0x10) != 0  
-                            game_data["LadeaTower_Chest_A8"]       = (parts[123] & 0x80) != 0  
+                            set_flag("WeaponPlant_Cleared", (parts[116] & 0x04) != 0)
+                            set_flag("WeaponPlant_Chest_74", (parts[116] & 0x08) != 0)  
+                            set_flag("WeaponPlant_Chest_76", (parts[116] & 0x02) != 0)  
+                            set_flag("WeaponPlant_Chest_77", (parts[116] & 0x01) != 0) 
 
-                            game_data["GumbiousTemple_Cleared"]    = (parts[116] & 0x10) != 0
-                            game_data["GumbiousTemple_Chest_70"]   = (parts[116] & 0x80) != 0  
-                            game_data["GumbiousTemple_Chest_71"]   = (parts[116] & 0x40) != 0  
-                            game_data["GumbiousTemple_Chest_72"]   = (parts[116] & 0x20) != 0 
+                            set_flag("Strength_Cleared", (parts[122] & 0x10) != 0)
+                            set_flag("TowerOfStrength_Chest_95", (parts[120] & 0x04) != 0)  
+                            set_flag("TowerOfStrength_Chest_96", (parts[120] & 0x02) != 0)  
+                            set_flag("TowerOfStrength_Chest_97", (parts[120] & 0x01) != 0)  
+                            set_flag("TowerOfStrength_Chest_98", (parts[121] & 0x80) != 0)  
+                            set_flag("TowerOfStrength_Chest_99", (parts[121] & 0x40) != 0)  
+                            set_flag("TowerOfStrength_Chest_A1", (parts[122] & 0x40) != 0)  
+                            set_flag("TowerOfStrength_Chest_A2", (parts[122] & 0x20) != 0)  
 
-                            game_data["WeaponPlant_Cleared"]       = (parts[116] & 0x04) != 0
-                            game_data["WeaponPlant_Chest_74"]      = (parts[116] & 0x08) != 0  
-                            game_data["WeaponPlant_Chest_76"]      = (parts[116] & 0x02) != 0  
-                            game_data["WeaponPlant_Chest_77"]      = (parts[116] & 0x01) != 0 
+                            set_flag("TowerofCourage_Cleared", (parts[122] & 0x04) != 0)
+                            set_flag("TowerOfCourage_Chest_9B", (parts[121] & 0x10) != 0)  
+                            set_flag("TowerOfCourage_Chest_9C", (parts[121] & 0x08) != 0)  
+                            set_flag("TowerOfCourage_Chest_9D", (parts[121] & 0x04) != 0)  
+                            set_flag("TowerOfCourage_Chest_9E", (parts[121] & 0x02) != 0)
+                            set_flag("TowerOfCourage_Chest_A4", (parts[122] & 0x08) != 0)     
 
-                            game_data["Strength_Cleared"]          = (parts[122] & 0x10) != 0
-                            game_data["TowerOfStrength_Chest_95"]  = (parts[120] & 0x04) != 0  
-                            game_data["TowerOfStrength_Chest_96"]  = (parts[120] & 0x02) != 0  
-                            game_data["TowerOfStrength_Chest_97"]  = (parts[120] & 0x01) != 0  
-                            game_data["TowerOfStrength_Chest_98"]  = (parts[121] & 0x80) != 0  
-                            game_data["TowerOfStrength_Chest_99"]  = (parts[121] & 0x40) != 0  
-                            game_data["TowerOfStrength_Chest_A1"]  = (parts[122] & 0x40) != 0  
-                            game_data["TowerOfStrength_Chest_A2"]  = (parts[122] & 0x20) != 0  
+                            set_flag("SoldiersIsland_Cleared", (parts[103] & 0x04) != 0)
+                            set_flag("SoldiersIsland_Chest_86", (parts[118] & 0x02) != 0)  
+                            set_flag("SoldiersIsland_Chest_87", (parts[118] & 0x01) != 0)  
+                            set_flag("SoldiersIsland_Chest_88", (parts[119] & 0x80) != 0)  
+                            set_flag("SoldiersIsland_Chest_89", (parts[119] & 0x40) != 0)  
+                            set_flag("SoldiersIsland_Chest_8A", (parts[119] & 0x20) != 0)  
 
-                            game_data["TowerofCourage_Cleared"]    = (parts[122] & 0x04) != 0
-                            game_data["TowerOfCourage_Chest_9B"]   = (parts[121] & 0x10) != 0  
-                            game_data["TowerOfCourage_Chest_9C"]   = (parts[121] & 0x08) != 0  
-                            game_data["TowerOfCourage_Chest_9D"]   = (parts[121] & 0x04) != 0  
-                            game_data["TowerOfCourage_Chest_9E"]   = (parts[121] & 0x02) != 0
-                            game_data["TowerOfCourage_Chest_A4"]   = (parts[122] & 0x08) != 0     
+                            set_flag("BirthValley_Cleared", (parts[106] & 0x04) != 0)
+                            set_flag("BirthValley_Chest_1B", (parts[105] & 0x10) != 0)  
+                            set_flag("BirthValley_Chest_1C", (parts[105] & 0x08) != 0)  
 
-                            game_data["SoldiersIsland_Cleared"]    = (parts[103] & 0x04) != 0
-                            game_data["SoldiersIsland_Chest_86"]   = (parts[118] & 0x02) != 0  
-                            game_data["SoldiersIsland_Chest_87"]   = (parts[118] & 0x01) != 0  
-                            game_data["SoldiersIsland_Chest_88"]   = (parts[119] & 0x80) != 0  
-                            game_data["SoldiersIsland_Chest_89"]   = (parts[119] & 0x40) != 0  
-                            game_data["SoldiersIsland_Chest_8A"]   = (parts[119] & 0x20) != 0  
-
-                            game_data["BirthValley_Cleared"]       = (parts[106] & 0x04) != 0
-                            game_data["BirthValley_Chest_1B"]      = (parts[105] & 0x10) != 0  
-                            game_data["BirthValley_Chest_1C"]      = (parts[105] & 0x08) != 0  
-
+                            # --- 3. ITEMS ---
                             if len(items) >= 19:
-                                game_data["Hydrofoil"]    = (items[1]  == 1)
-                                game_data["Icedigger"]    = (items[2]  == 1)
-                                game_data["Elsydeon"]     = (items[3]  == 1)
-                                game_data["AeroPrism"]    = (items[4]  == 1)
-                                game_data["Alshline"]     = (items[5]  == 1)
-                                game_data["EclipseTorch"] = (items[6]  == 1)
-                                game_data["Psychowand"]   = (items[7]  == 1)
-                                game_data["Sapphire"]     = (items[8]  == 1)
-                                game_data["platekey"]     = (items[9]  == 1)
-                                game_data["vahalkey"]     = (items[10] == 1)
-                                game_data["machinekey"]   = (items[11] == 1)
-                                game_data["Frademantl"]   = (items[12] == 1)
-                                game_data["Algo Ring"]    = (items[17] == 1)
-                                game_data["Mota Ring"]    = (items[14] == 1)
-                                game_data["Dezo Ring"]    = (items[15] == 1)
-                                game_data["Palm Ring"]    = (items[13] == 1)
-                                game_data["Rykr Ring"]    = (items[16] == 1)
-                                game_data["ambereye"]       = (items[0] > 0)
-                                game_data["ambereye_count"] = items[0]
+                                set_flag("Hydrofoil", items[1] == 1)
+                                set_flag("Icedigger", items[2] == 1)
+                                set_flag("Elsydeon", items[3] == 1)
+                                set_flag("AeroPrism", items[4] == 1)
+                                set_flag("Alshline", items[5] == 1)
+                                set_flag("EclipseTorch", items[6] == 1)
+                                set_flag("Psychowand", items[7] == 1)
+                                set_flag("Sapphire", items[8] == 1)
+                                set_flag("platekey", items[9] == 1)
+                                set_flag("vahalkey", items[10] == 1)
+                                set_flag("machinekey", items[11] == 1)
+                                set_flag("Frademantl", items[12] == 1)
+                                set_flag("Algo Ring", items[17] == 1)
+                                set_flag("Mota Ring", items[14] == 1)
+                                set_flag("Dezo Ring", items[15] == 1)
+                                set_flag("Palm Ring", items[13] == 1)
+                                set_flag("Rykr Ring", items[16] == 1)
+                                set_flag("ambereye", items[0] > 0)
+                                set_flag("ambereye_count", items[0])
 
-                        print(f"STABILITY: {stable_duration:.1f}s | Raja: {game_data['Raja_Entered']}    ", end="\r")
+                        print(f"STABILITY: {stable_duration:.1f}s | Last Trigger: {last_triggered_event:<35}", end="\r")
 
                 else:
                     if stable_start_time is not None:
@@ -386,11 +399,20 @@ def watch_file():
 
 def setup_tray():
     icon_path = os.path.join(BASE_DIR, "tracker.ico")
-    try: image = Image.open(icon_path)
-    except: image = Image.new('RGB', (64, 64), color=(0, 229, 255))
+    try: 
+        image = Image.open(icon_path)
+    except Exception: 
+        image = Image.new('RGB', (64, 64), color=(0, 229, 255))
+        
     def restart(icon, item):
-        perform_reset(); icon.stop(); os.execl(sys.executable, sys.executable, *sys.argv)
-    menu = (pystray.MenuItem('Restart', restart), pystray.MenuItem('Quit', lambda i, j: os._exit(0)))
+        perform_reset()
+        icon.stop()
+        os.execl(sys.executable, sys.executable, *sys.argv)
+        
+    menu = (
+        pystray.MenuItem('Restart', restart), 
+        pystray.MenuItem('Quit', lambda i, j: os._exit(0))
+    )
     icon = pystray.Icon("PS4_Tracker", image, "PS4 Tracker", menu)
     icon.run()
 
