@@ -1061,24 +1061,24 @@ const mapData = { dezolis: 'maps/dezolis.png', motavia: 'maps/motavia.png', rykr
 const mapDimensions = { motavia: { w: 800, h: 662 }, dezolis: { w: 800, h: 339 }, rykros: { w: 365, h: 365 }, space: { w: 320, h: 225 } };
 
 const itemsData = [
-    { "name": "AeroPrism", "type": "Toggle", "img": "images/aeroprism.png" },
-    { "name": "Alshline", "type": "Toggle", "img": "images/alshline.png" },
-    { "name": "EclipseTorch", "type": "Toggle", "img": "images/torch.png" },
-    { "name": "Elsydeon", "type": "Toggle", "img": "images/elsydeon.png" },
-    { "name": "Hydrofoil", "type": "Toggle", "img": "images/hydrofoil.png" },
-    { "name": "Icedigger", "type": "Toggle", "img": "images/icedigger.png" },
-    { "name": "Sapphire", "type": "Toggle", "img": "images/sapphire.png" },
-    { "name": "Frademantl", "type": "Toggle", "img": "images/frademantl.png" },
-    { "name": "Psychowand", "type": "Toggle", "img": "images/psycowand.png" },
-    { "name": "machinekey", "type": "Toggle", "img": "images/machinekey.png" },
-    { "name": "platekey", "type": "Toggle", "img": "images/platekey.png" },
-    { "name": "vahalkey", "type": "Toggle", "img": "images/vahalkey.png" },
-    { "name": "Algo Ring", "type": "Toggle", "img": "images/aring.png" },
-    { "name": "Mota Ring", "type": "Toggle", "img": "images/mring.png" },
-    { "name": "Dezo Ring", "type": "Toggle", "img": "images/dring.png" },
-    { "name": "Palm Ring", "type": "Toggle", "img": "images/pring.png" },
-    { "name": "Rykr Ring", "type": "Toggle", "img": "images/rring.png" },
-    { "name": "ambereye", "type": "consumable", "img": "images/ambereye.png", "max_quantity": 5 }
+    { "name": "AeroPrism", "label": "AeroPrism", "type": "Toggle", "img": "images/aeroprism.png" },
+    { "name": "Alshline", "label": "Alshline", "type": "Toggle", "img": "images/alshline.png" },
+    { "name": "EclipseTorch", "label": "Eclipse Torch", "type": "Toggle", "img": "images/torch.png" },
+    { "name": "Elsydeon", "label": "Elsydeon", "type": "Toggle", "img": "images/elsydeon.png" },
+    { "name": "Hydrofoil", "label": "Hydrofoil", "type": "Toggle", "img": "images/hydrofoil.png" },
+    { "name": "Icedigger", "label": "Icedigger", "type": "Toggle", "img": "images/icedigger.png" },
+    { "name": "Sapphire", "label": "Sapphire", "type": "Toggle", "img": "images/sapphire.png" },
+    { "name": "Frademantl", "label": "Frademantl", "type": "Toggle", "img": "images/frademantl.png" },
+    { "name": "Psychowand", "label": "Psycho Wand", "type": "Toggle", "img": "images/psycowand.png" },
+    { "name": "machinekey", "label": "Machine Key", "type": "Toggle", "img": "images/machinekey.png" },
+    { "name": "platekey", "label": "Plate Key", "type": "Toggle", "img": "images/platekey.png" },
+    { "name": "vahalkey", "label": "Vahal Key", "type": "Toggle", "img": "images/vahalkey.png" },
+    { "name": "Algo Ring", "label": "Algo Ring", "type": "Toggle", "img": "images/aring.png" },
+    { "name": "Mota Ring", "label": "Mota Ring", "type": "Toggle", "img": "images/mring.png" },
+    { "name": "Dezo Ring", "label": "Dezo Ring", "type": "Toggle", "img": "images/dring.png" },
+    { "name": "Palm Ring", "label": "Palm Ring", "type": "Toggle", "img": "images/pring.png" },
+    { "name": "Rykr Ring", "label": "Rykr Ring", "type": "Toggle", "img": "images/rring.png" },
+    { "name": "ambereye", "label": "Amber-Eye", "type": "consumable", "img": "images/ambereye.png", "max_quantity": 5 }
 ];
 
 const locationsData = [
@@ -1178,9 +1178,10 @@ function render() {
         img.src = item.img;
         div.appendChild(img);
 
+        // Find this inside function render():
         const nameLabel = document.createElement('span');
         nameLabel.className = 'item-name';
-        nameLabel.textContent = item.name;
+        nameLabel.textContent = item.label || item.name; // <-- Change item.name to item.label || item.name
         div.appendChild(nameLabel);
 
         if (item.type === 'consumable') {
